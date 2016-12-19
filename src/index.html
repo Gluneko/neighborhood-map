@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <title>Gluneko's neighborhood map</title>
+</head>
+<body>
+    <div class="container">
+        <aside class="options-box">
+            <h1>Explore in Silicon Valley</h1>
+            <section>
+                <input type="text" id="places-search">
+                <input type="button" id="go-places" value="Go">
+            </section>
+        </aside>
+        <article id="map"></article>
+    </div>
+
+   <script src="js/main.js"></script>
+   <!--Load the JS API ASYNCHRONOUSLY below.-->
+   <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBPmp02XfGoAcgbOPdJDZeP1VybS3tSubQ&libraries=places&v=3&callback=initMap">
+   </script>
+
+</body>
+</html>
