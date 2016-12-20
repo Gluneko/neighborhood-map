@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/style.css">
-    <script src="http://code.jquery.com/jquery-latest.js"></script>
+
     <title>Gluneko's neighborhood map</title>
 </head>
 <body>
@@ -15,15 +15,23 @@
                 <input type="text" id="places-search">
                 <input type="button" id="go-places" value="Go">
             </section>
+            <!-- I want to display all the title of markers here,but not works -->
+            <section id="list-view">
+                <ul data-bind="foreach: list">
+                    <li data-bind="text: $data"></li>
+                </ul>
+            </section>
         </aside>
         <article id="map"></article>
     </div>
-
-   <script src="js/main.js"></script>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="js/lib/knockout-3.2.0.js"></script>
+    <script src="js/main.js"></script>
    <!--Load the JS API ASYNCHRONOUSLY below.-->
    <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBPmp02XfGoAcgbOPdJDZeP1VybS3tSubQ&libraries=places&v=3&callback=initMap">
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBPmp02XfGoAcgbOPdJDZeP1VybS3tSubQ&libraries=places&v=3&callback=initMap" onerror="googleError()">
    </script>
 
 </body>
 </html>
+
