@@ -80,3 +80,42 @@ html,
       #zoom-to-area {
         width: 24%;
       }
+
+      /*infowindow*/
+      .info-left{
+        /*width:33.3%;*/
+        /*display: -webkit-flex;*/
+        margin-right: 1em;
+      }
+
+      .info-name{
+        font-size:20px;
+        color: #a3ccff;
+      }
+
+      .info-addr{
+        color: #bbb;
+      }
+
+        .info-rating{
+            /*padding-left:0 !important;*/
+            /*align-items: flex-start;*/
+        }
+        .info-rating-left{
+            /*padding-left:0 !important;*/
+            /*flex: 3;*/
+        }
+        .info-yelp{
+            /*flex: 1;*/
+        }
+        .info-right{
+        color: #666;
+        /*width:66.6%;*/
+        /*flex-direction: row;*/
+        flex: 1;
+        }
+
+        .info{
+            display: -webkit-flex;
+            align-items:center;
+        }

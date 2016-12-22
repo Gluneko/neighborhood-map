@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/style.css">
-
+    <!-- <link rel="stylesheet" href="css/bootstrap.min.css"> -->
     <title>Gluneko's neighborhood map</title>
 </head>
 <body>
@@ -15,17 +15,19 @@
                 <input type="text" id="places-search">
                 <input type="button" id="go-places" value="Go">
             </section>
-            <!-- I want to display all the title of markers here,but not works -->
+
             <section id="list-view">
                 <ul data-bind="foreach: list">
-                    <li data-bind="text: $data"></li>
+                    <li data-bind="text: title,event: { mouseover: $parent.listMouseOver,mouseout:$parent.listMouseOut}"></li>
                 </ul>
             </section>
         </aside>
         <article id="map"></article>
     </div>
     <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <!-- <script src="js/lib/bootstrap.min.js"></script> -->
     <script src="js/lib/knockout-3.2.0.js"></script>
+    <script src="js/lib/oauth-signature.min.js"></script>
     <script src="js/main.js"></script>
    <!--Load the JS API ASYNCHRONOUSLY below.-->
    <script async defer
