@@ -17,8 +17,18 @@
             </section>
 
             <section id="list-view">
-                <ul data-bind="foreach: list">
-                    <li data-bind="text: title,event: { mouseover: $parent.listMouseOver,mouseout:$parent.listMouseOut}"></li>
+                <ul class="list" data-bind="foreach: list">
+                    <li data-bind="event: { mouseover: $parent.listMouseOver,mouseout:$parent.listMouseOut}">
+                        <div class="list-item" data-bind="event: { click: $parent.listClick}">
+                            <span data-bind="text: id"></span>.<span data-bind="text: title"></span>
+
+                        </div>
+                        <div class="navigate">
+                            <svg class="icon" aria-hidden="true" data-bind="visible: true==true">
+                                <use xlink:href="#icon-daohang3"></use>
+                            </svg>
+                        </div>
+                    </li>
                 </ul>
             </section>
         </aside>
@@ -28,6 +38,7 @@
     <!-- <script src="js/lib/bootstrap.min.js"></script> -->
     <script src="js/lib/knockout-3.2.0.js"></script>
     <script src="js/lib/oauth-signature.min.js"></script>
+    <script src="js/lib/iconfont.js"></script>
     <script src="js/main.js"></script>
    <!--Load the JS API ASYNCHRONOUSLY below.-->
    <script async defer

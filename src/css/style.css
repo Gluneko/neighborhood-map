@@ -90,7 +90,7 @@ html,
 
       .info-name{
         font-size:20px;
-        color: #0073bb;
+
         font-weight: bold;
       }
 
@@ -126,3 +126,41 @@ html,
         .info-review{
             font-size: 10px;
         }
+
+        a.info-link:hover {
+            text-decoration: underline;
+        }
+
+        a.info-link {
+            text-decoration: none;
+            color: #0073bb;
+        }
+
+        ul.list {
+            list-style-type: none;
+
+        }
+
+        ul.list>li {
+            display: -webkit-flex;
+            display: flex;
+            align-items:center;
+        }
+
+        .list-item {
+            flex:1;
+        }
+
+        .navigate {
+            margin-right: 1em;
+        }
+
+    .icon {
+       width: 1em; height: 1em;
+       vertical-align: -0.15em;
+       fill: currentColor;
+       overflow: hidden;
+
+       /*float: right;*/
+       /*padding-top: 8px;*/
+    }
