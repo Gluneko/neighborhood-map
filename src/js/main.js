@@ -162,14 +162,13 @@ var yelp_url = 'http://api.yelp.com/v2/search',
           address=place.location.address,
           img=place.image_url,
           rating_img=place.rating_img_url,
-          rating_img_small=place.rating_img_url_small,
-          rating_img_large=place.rating_img_url_large,
+          //rating_img_small=place.rating_img_url_small,
+          //rating_img_large=place.rating_img_url_large,
           review_count=place.review_count;
           var content='<div class="info"><section class="info-left">'+'<img src="'+img+'">'+'</section>'+'<section class="info-right">'+
             '<div class="info-name">'+name+'</div>'+'<div class="info-addr">'+address+'</div>'+
-            '<div class="info-rating"><source media="(min-width: 800px)" srcset="'+rating_img_large+'" />'+
-            '<source media="(min-width: 500px)" srcset="'+rating_img+'" />'+
-            '<img class="info-rating-left" src="'+rating_img_small+'">'+
+            '<div class="info-rating">'+
+            '<img class="info-rating-left" src="'+rating_img+'">'+
             '<img class="info-yelp" src="img/yelp.png"></div>'+
             '<div class="info-review">Based on '+review_count+' reviews</div>'+
           '</section></div>';

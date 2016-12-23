@@ -90,16 +90,18 @@ html,
 
       .info-name{
         font-size:20px;
-        color: #a3ccff;
+        color: #0073bb;
+        font-weight: bold;
       }
 
       .info-addr{
-        color: #bbb;
+        /*color: #bbb;*/
       }
 
         .info-rating{
-            /*padding-left:0 !important;*/
-            /*align-items: flex-start;*/
+            display: -webkit-flex;
+            display: flex;
+            align-items:center;
         }
         .info-rating-left{
             /*padding-left:0 !important;*/
@@ -117,5 +119,10 @@ html,
 
         .info{
             display: -webkit-flex;
-            align-items:center;
+            display: flex;
+            align-items:flex-start;
+        }
+
+        .info-review{
+            font-size: 10px;
         }
