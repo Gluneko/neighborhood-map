@@ -10,18 +10,19 @@
 <body>
     <div class="container">
         <aside class="options-box">
-            <h1>Explore in Silicon Valley</h1>
+            <h1>Explore in <span data-bind="text:center"></span></h1>
             <section>
-                <input type="text" id="places-search">
-                <input type="button" id="go-places" value="Go">
+                Find<input type="text" id="nearby-search" data-bind="textInput: querystr,event: {input:filter,propertychange:filter}">
+                Near<input type="text" id="places-search">
+                <!-- ,event: {oninput:query,onpropertychange:query} -->
+                <!-- <input type="button" id="go-places" value="Go"> -->
             </section>
 
             <section id="list-view">
-                <ul class="list" data-bind="foreach: list">
+                <ul class="list" data-bind="foreach: listFiltered">
                     <li data-bind="event: { mouseover: $parent.listMouseOver,mouseout:$parent.listMouseOut}">
-                        <div class="list-item" data-bind="event: { click: $parent.listClick}">
-                            <span data-bind="text: id"></span>.<span data-bind="text: title"></span>
-
+                        <div class="list-item" data-bind="text: title,event: { click: $parent.listClick}">
+                            <!-- <span data-bind="text: id"></span>.<span data-bind="text: title"></span> -->
                         </div>
                         <div class="navigate">
                             <svg class="icon" aria-hidden="true" data-bind="visible: true==true">
