@@ -8,16 +8,18 @@
      //Initialize the map
      function initMap() {
 
-      var sv={lat:37.387474,lng:-122.057543},latlng={lat:0,lng:0};
-       //  Create a new map center in Silicon Valley.
+      var initial={lat:37.387474,lng:-122.057543},latlng={lat:0,lng:0};
+
+
+      //  Create a new map center in Silicon Valley.
        map=new google.maps.Map(document.getElementById('map'),{
-          center:sv,
+          center:initial,
           zoom:13,
           mapTypeControl: false
        });
 
       //  var request = {
-      //   location: sv,
+      //   location: initial,
       //   radius: '5000',
       // };
 
@@ -30,52 +32,47 @@
 
         // Listen for the event fired when the user selects a prediction from the
         // picklist and retrieve more details for that place.
-        placesSearch.addListener('place_changed', searchPlaces);
+        placesSearch.addListener('place_changed', function () {
+          searchPlaces({address:vm.center()});
+        });
 
 
       // This function takes the input value in the find area text input
       // locates it, and then zooms into that area. This is so that the user can
       // show all listings, then decide to focus on one area of the map.
-      function searchPlaces(term) {
-        // Initialize the geocoder.
-        //  console.log(place);
-        // var geocoder = new google.maps.Geocoder();
-        // // Get the address or place that the user entered.
-        // var address = document.getElementById('places-search').value;
-        // // Make sure the address isn't blank.
-        // if (address == '') {
-        //   window.alert('You must enter an area, or address.');
-        // } else {
-        //   // Geocode the address/area entered to get the center. Then, center the map
-        //   // on it and zoom in
-        //   geocoder.geocode(
-        //     { address: address,
-        //       //componentRestrictions: {locality: 'New York'}
-        //     }, function(results, status) {
-        //       if (status == google.maps.GeocoderStatus.OK) {
-        //         //console.log(results[0]);
-        //         map.setCenter(results[0].geometry.location);
-        //         map.setZoom(13);
-        //       } else {
-        //         window.alert('We could not find that location - try entering a more' +
-        //             ' specific place.');
-        //       }
-        //     });
-        // }
-
-        // Get the place details from the autocomplete object.
-        var place = placesSearch.getPlace(),
-        center=place.address_components[0].short_name;
-        if(typeof(center)== "undefined"){
+      function searchPlaces(request,term) {
+        console.log(request);
+        if(typeof(request.address)!='undefined'&&request.address==''){
+          alert('You must enter an area, or address.');
           return;
         }
-        vm.center(center);
-        map.setCenter(place.geometry.location);
-        newPlaceSearch(place.formatted_address,term);
+        var geocoder = new google.maps.Geocoder();
+           // Geocode the address/area entered to get the center. Then, center the map
+          // on it and zoom in
+          geocoder.geocode(
+            request, function(results, status) {
+              if (status == google.maps.GeocoderStatus.OK) {
+                place=results[0];
+                 //console.log(place);
+                map.setCenter(place.geometry.location);
+                map.setZoom(13);
+                var title=place.address_components[0].short_name;
+                if(typeof(title)== "undefined"){
+                  title=place.formatted_address;
+                }
+                var center=title;
+                vm.title(title);
+                vm.center(center);
+                map.setCenter(place.geometry.location);
+                newPlaceSearch(place.formatted_address,term);
+              } else {
+                window.alert('We could not find that location - try entering a more' +
+                    ' specific place.');
+              }
+            });
       }
      // service = new google.maps.places.PlacesService(map);
      // service.nearbySearch(request, nearbyCallback);
-
       function nearbySearch(results) {
         hideMarkers(vm.list());
         vm.list.removeAll();
@@ -135,7 +132,7 @@ var yelp_url = 'http://api.yelp.com/v2/search',
     yelp_token='KhvBiuMmDYHKB9L9B5wzoNr9XywM7Dxh',
     yelp_token_secret='wDzMn0gVn8xKBu4l26soAIg1f9E';
 
-newPlaceSearch('Silicon+Valley');
+
 
 function newPlaceSearch (location,term) {
       var parameters = {
@@ -147,9 +144,10 @@ function newPlaceSearch (location,term) {
       oauth_version : '1.0',
       callback: 'cb',              // This is crucial to include for jsonp implementation in AJAX or else the oauth-signature will be wrong.
       location:location,
-      //term:term,
+      //limit:10,
+      sort:1,
       radius_filter:10000
-      // cll:sv.lat+','+sv.lng,
+      // cll:initial.lat+','+initial.lng,
     };
 
     if(typeof(term)!="undefined"){
@@ -171,6 +169,7 @@ function newPlaceSearch (location,term) {
       },
       fail: function(xhr, status, error) {
       // Do stuff on fail
+      //清除所有标记。。
       console.log("An AJAX error occured: " + status + "\nError: " + error + "\nError detail: " + xhr.responseText);
     }
     };
@@ -274,12 +273,14 @@ function newPlaceSearch (location,term) {
       }
 
 
-
+//newPlaceSearch('Silicon+Valley');
+searchPlaces({location:initial});
 
     var ViewModel=function () {
       var self=this;
       self.list=ko.observableArray([]);
-      self.center=ko.observable('Silicon Valley');
+      self.title=ko.observable('Silicon Valley');
+      self.center=ko.observable('');
       self.querystr=ko.observable('');
       self.terms=ko.observableArray(['food','restaurants','active life','medical']);
       self.listFiltered=ko.computed(function () {
@@ -295,8 +296,31 @@ function newPlaceSearch (location,term) {
         hideMarkers(self.list());
         showListings();
       };
+      // Bias the autocomplete object to the user's geographical location,
+      // as supplied by the browser's 'navigator.geolocation' object.
+      self.myPosition=function () {
+
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            initial.lat=position.coords.latitude;
+            initial.lng=position.coords.longitude;
+            searchPlaces({location:initial});
+          }, function() {
+            handleLocationError(true);
+          });
+        } else {
+          // Browser doesn't support Geolocation
+          handleLocationError(false);
+        }
+        function handleLocationError(browserHasGeolocation) {
+
+        alert(browserHasGeolocation ?
+                              'Error: The Geolocation service failed.' :
+                              'Error: Your browser doesn\'t support geolocation.');
+      }
+      }
       self.termSerach=function (term) {
-        searchPlaces(term);
+        searchPlaces({address:self.center()},term);
       };
 
      // self.navigateEnabled=ko.observable(false);

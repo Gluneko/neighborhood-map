@@ -10,10 +10,11 @@
 <body>
     <div class="container">
         <aside class="options-box">
-            <h1>Explore in <span data-bind="text:center"></span></h1>
+            <h1>Explore in <span data-bind="text:title"></span></h1>
             <section>
                 Find<input type="text" id="nearby-search" data-bind="textInput: querystr,event: {input:filter,propertychange:filter}">
                 Near<input type="text" id="places-search" data-bind="value:center">
+                <input id="my-position" type="button" value="My Position" data-bind="click:myPosition">
                 <ul class="term" data-bind="foreach: terms">
                     <li data-bind="text:$data,click:$parent.termSerach"></li>
                 </ul>
