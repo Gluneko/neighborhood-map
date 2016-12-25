@@ -36,7 +36,7 @@
       // This function takes the input value in the find area text input
       // locates it, and then zooms into that area. This is so that the user can
       // show all listings, then decide to focus on one area of the map.
-      function searchPlaces() {
+      function searchPlaces(term) {
         // Initialize the geocoder.
         //  console.log(place);
         // var geocoder = new google.maps.Geocoder();
@@ -71,7 +71,7 @@
         }
         vm.center(center);
         map.setCenter(place.geometry.location);
-        newPlaceSearch(place.formatted_address);
+        newPlaceSearch(place.formatted_address,term);
       }
      // service = new google.maps.places.PlacesService(map);
      // service.nearbySearch(request, nearbyCallback);
@@ -137,7 +137,7 @@ var yelp_url = 'http://api.yelp.com/v2/search',
 
 newPlaceSearch('Silicon+Valley');
 
-function newPlaceSearch (location) {
+function newPlaceSearch (location,term) {
       var parameters = {
       oauth_consumer_key: yelp_key,
       oauth_token: yelp_token,
@@ -147,9 +147,14 @@ function newPlaceSearch (location) {
       oauth_version : '1.0',
       callback: 'cb',              // This is crucial to include for jsonp implementation in AJAX or else the oauth-signature will be wrong.
       location:location,
+      //term:term,
+      radius_filter:10000
       // cll:sv.lat+','+sv.lng,
     };
 
+    if(typeof(term)!="undefined"){
+      parameters.term=term;
+    }
     var encodedSignature = oauthSignature.generate('GET',yelp_url, parameters, yelp_key_secret, yelp_token_secret);
     parameters.oauth_signature = encodedSignature;
 
@@ -276,6 +281,7 @@ function newPlaceSearch (location) {
       self.list=ko.observableArray([]);
       self.center=ko.observable('Silicon Valley');
       self.querystr=ko.observable('');
+      self.terms=ko.observableArray(['food','restaurants','active life','medical']);
       self.listFiltered=ko.computed(function () {
         if($.trim(self.querystr()).length==0){
           return self.list();
@@ -289,6 +295,10 @@ function newPlaceSearch (location) {
         hideMarkers(self.list());
         showListings();
       };
+      self.termSerach=function (term) {
+        searchPlaces(term);
+      };
+
      // self.navigateEnabled=ko.observable(false);
       self.listMouseOver=function (marker) {
         marker.setAnimation(google.maps.Animation.BOUNCE);

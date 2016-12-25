@@ -13,7 +13,10 @@
             <h1>Explore in <span data-bind="text:center"></span></h1>
             <section>
                 Find<input type="text" id="nearby-search" data-bind="textInput: querystr,event: {input:filter,propertychange:filter}">
-                Near<input type="text" id="places-search">
+                Near<input type="text" id="places-search" data-bind="value:center">
+                <ul class="term" data-bind="foreach: terms">
+                    <li data-bind="text:$data,click:$parent.termSerach"></li>
+                </ul>
                 <!-- ,event: {oninput:query,onpropertychange:query} -->
                 <!-- <input type="button" id="go-places" value="Go"> -->
             </section>
