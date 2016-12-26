@@ -127,6 +127,10 @@ html,
             font-size: 10px;
         }
 
+        .info-cate {
+          color: #0073bb;
+          line-height: 1.5em;
+        }
         a.info-link:hover {
             text-decoration: underline;
         }
@@ -164,3 +168,5 @@ html,
        /*float: right;*/
        /*padding-top: 8px;*/
     }
+
+

@@ -41,7 +41,7 @@
       // locates it, and then zooms into that area. This is so that the user can
       // show all listings, then decide to focus on one area of the map.
       function searchPlaces(request,term) {
-        console.log(request);
+       // console.log(request);
         if(typeof(request.address)!='undefined'&&request.address==''){
           alert('You must enter an area, or address.');
           return;
@@ -255,16 +255,29 @@ function newPlaceSearch (location,term) {
           img=place.image_url,
           rating_img=place.rating_img_url,
           url=place.url,
+          categories_arr=[],//=place.categories[0].join(','),
           //rating_img_small=place.rating_img_url_small,
           //rating_img_large=place.rating_img_url_large,
           review_count=place.review_count;
           //console.log(address);
+          // for(var i=0,categories,len=categories_arr[0].length;i<len;i++){
+            // if(place.categories.length>1){
+            //   categories+=',';
+            //   categories+=categories_arr[1][0];
+            // }
+            console.log(place.distance);
+            place.categories.forEach( function(e) {
+              categories_arr.push(e[0]);
+            });
+            var categories=categories_arr.slice(0,2).join(',');
+          // }
           var content='<div class="info"><section class="info-left">'+'<img src="'+img+'">'+'</section>'+'<section class="info-right">'+
             '<div class="info-name"><a class="info-link" href="'+url+'">'+name+'</a></div>'+'<div class="info-addr">'+address+'</div>'+
             '<div class="info-rating">'+
             '<img class="info-rating-left" src="'+rating_img+'">'+
             '<img class="info-yelp" src="img/yelp.png"></div>'+
             '<div class="info-review">Based on '+review_count+' reviews</div>'+
+            '<div class="info-cate">'+categories+'<div>'+
           '</section></div>';
           infowindow.setContent(content);
           // Open the infowindow on the correct marker.
@@ -342,6 +355,35 @@ searchPlaces({location:initial});
         populateInfoWindow(marker, largeInfowindow);
       };
 
+      self.displayDirections=function (marker) {
+         hideMarkers(self.list());
+        var directionsService = new google.maps.DirectionsService;
+        // Get the destination address from the user entered value.
+        var destinationAddress =
+            document.getElementById('search-within-time-text').value;
+        // Get mode again from the user entered value.
+        var mode = document.getElementById('mode').value;
+        directionsService.route({
+          // The origin is the passed in marker's position.
+          origin: origin,
+          // The destination is user entered address.
+          destination: destinationAddress,
+          travelMode: google.maps.TravelMode[mode]
+        }, function(response, status) {
+          if (status === google.maps.DirectionsStatus.OK) {
+            var directionsDisplay = new google.maps.DirectionsRenderer({
+              map: map,
+              directions: response,
+              draggable: true,
+              polylineOptions: {
+                strokeColor: 'green'
+              }
+            });
+          } else {
+            window.alert('Directions request failed due to ' + status);
+          }
+        });
+      }
       };
       vm = new ViewModel();
       ko.applyBindings(vm);
