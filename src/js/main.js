@@ -52,18 +52,21 @@
           geocoder.geocode(
             request, function(results, status) {
               if (status == google.maps.GeocoderStatus.OK) {
+                if(vm.centerMarker()!=null){
+                    vm.centerMarker().setMap(null);
+                }
                 place=results[0];
                  //console.log(place);
                 map.setCenter(place.geometry.location);
-                map.setZoom(13);
+                //map.setZoom(13);
                 var title=place.address_components[0].short_name;
+                var center=place.formatted_address;
                 if(typeof(title)== "undefined"){
-                  title=place.formatted_address;
+                  title=center;
                 }
-                var center=title;
                 vm.title(title);
                 vm.center(center);
-                map.setCenter(place.geometry.location);
+                createCenterMarker(place);
                 newPlaceSearch(place.formatted_address,term);
               } else {
                 window.alert('We could not find that location - try entering a more' +
@@ -186,6 +189,36 @@ function newPlaceSearch (location,term) {
 
        var largeInfowindow = new google.maps.InfoWindow();
 
+          var icon = {
+            url: 'http://chart.googleapis.com/chart?chst=d_map_spin&chld=1.15|0|0091ff|40|_|%E2%80%A2',
+            size: new google.maps.Size(35, 35),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(15, 34),
+            scaledSize: new google.maps.Size(25, 25)
+          };
+
+
+         function createCenterMarker(place) {
+        var marker = new google.maps.Marker({
+          map: map,
+          position: place.geometry.location,
+          title: place.name,
+          icon: icon,
+          id: place.id,
+          animation: google.maps.Animation.DROP
+        });
+          vm.centerMarker(marker);
+          // Two event listeners - one for mouseover, one for mouseout,
+          // to make the marker bounce or not.
+          marker.addListener('mouseover', function() {
+            this.setAnimation(google.maps.Animation.BOUNCE);
+          });
+          marker.addListener('mouseout', function() {
+            this.setAnimation(null);
+          });
+
+      }
+
          function createMarker(place,i) {
         //var placeLoc = place.geometry.location;
         // var icon = {
@@ -292,6 +325,7 @@ searchPlaces({location:initial});
     var ViewModel=function () {
       var self=this;
       self.list=ko.observableArray([]);
+      self.centerMarker=ko.observable();
       self.title=ko.observable('Silicon Valley');
       self.center=ko.observable('');
       self.querystr=ko.observable('');
