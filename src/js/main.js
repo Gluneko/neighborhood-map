@@ -14,7 +14,7 @@
       //  Create a new map center in Silicon Valley.
        map=new google.maps.Map(document.getElementById('map'),{
           center:initial,
-          zoom:13,
+          zoom:15,
           mapTypeControl: false
        });
 
@@ -56,9 +56,9 @@
                     vm.centerMarker().setMap(null);
                 }
                 place=results[0];
-                 //console.log(place);
+                console.log(place);
                 map.setCenter(place.geometry.location);
-                //map.setZoom(13);
+                //map.setZoom(15);
                 var title=place.address_components[0].short_name;
                 var center=place.formatted_address;
                 if(typeof(title)== "undefined"){
@@ -190,11 +190,11 @@ function newPlaceSearch (location,term) {
        var largeInfowindow = new google.maps.InfoWindow();
 
           var icon = {
-            url: 'http://chart.googleapis.com/chart?chst=d_map_spin&chld=1.15|0|0091ff|40|_|%E2%80%A2',
-            size: new google.maps.Size(35, 35),
+             url: 'http://chart.googleapis.com/chart?chst=d_map_spin&chld=1.15|0|0091ff|40|_|%E2%80%A2',
+             size: new google.maps.Size(21, 34),
             origin: new google.maps.Point(0, 0),
-            anchor: new google.maps.Point(15, 34),
-            scaledSize: new google.maps.Size(25, 25)
+            anchor: new google.maps.Point(10, 34),
+            scaledSize: new google.maps.Size(21, 34)
           };
 
 
@@ -392,18 +392,17 @@ searchPlaces({location:initial});
       self.displayDirections=function (marker) {
          hideMarkers(self.list());
         var directionsService = new google.maps.DirectionsService;
-        // Get the destination address from the user entered value.
-        var destinationAddress =
-            document.getElementById('search-within-time-text').value;
         // Get mode again from the user entered value.
-        var mode = document.getElementById('mode').value;
-        directionsService.route({
+        var mode = ['DRIVING','WALKING','BICYCLING','TRANSIT'];
+        // for(var i=0;i<4;i++){
+          var request={
           // The origin is the passed in marker's position.
-          origin: origin,
-          // The destination is user entered address.
-          destination: destinationAddress,
-          travelMode: google.maps.TravelMode[mode]
-        }, function(response, status) {
+          origin: self.centerMarker().position,
+          destination: marker.position,
+          // travelMode: google.maps.TravelMode[mode[i]]
+          travelMode: google.maps.TravelMode.DRIVING
+        };
+        directionsService.route(request, function(response, status) {
           if (status === google.maps.DirectionsStatus.OK) {
             var directionsDisplay = new google.maps.DirectionsRenderer({
               map: map,
@@ -411,12 +410,15 @@ searchPlaces({location:initial});
               draggable: true,
               polylineOptions: {
                 strokeColor: 'green'
-              }
+              },
+              //panel:document.getElementById('mode'+(i+1))
+              panel:document.getElementById('mode1')
             });
           } else {
             window.alert('Directions request failed due to ' + status);
           }
         });
+
       }
       };
       vm = new ViewModel();

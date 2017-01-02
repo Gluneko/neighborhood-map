@@ -36,6 +36,11 @@
                     </li>
                 </ul>
             </section>
+            <section id="directions-panel">
+                <ul data-bind="foreach: mode">
+                    <li data-bind="text:$data,click:$parent.termSerach"></li>
+                </ul>
+            </section>
         </aside>
         <article id="map"></article>
     </div>
