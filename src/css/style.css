@@ -4,6 +4,7 @@ html,
         height: 100%;
         margin: 0;
         padding: 0;
+        color: #525454;
       }
 
       .container {
@@ -16,58 +17,74 @@ html,
       }
 
       h1 {
-        color: #525454;
+        /*color: #525454;*/
         font-size: 22px;
         margin: 0 0 10px 0;
         text-align: center;
       }
 
-      #hide-listings,
-      #show-listings {
-        width: 48%;
-      }
-
-      hr {
-        background: #D0D7D9;
-        height: 1px;
-        margin: 20px 0 20px 0;
-        border: none;
+      h3 {
+        /*color: #525454;*/
+        font-size: 18px;
+        margin: 0 0 5px 0;
+        /*text-align: center;*/
       }
 
       #map {
-        bottom:0px;
-        height: 100%;
-        left: 362px;
         position: absolute;
-        right: 0px;
+       width: 100%;
+        height: 100%;
+        left: 0px;
+        top: 0px;
+        z-index: 1;
       }
 
-      .options-box {
-        background: #fff;
-        border: 1px solid #999;
+      #menu-btn {
+        position: absolute;
+         left: 10px;
+        top: 10px;
+        z-index: 2;
+        width: 50px;
+        height: 50px;
+        background-color: #679df6;
+        border-radius: 50px;
+      }
+      #menu {
+        background-color: rgba(255,255,255,0.6);
+        /*background:transparent;*/
+        position: absolute;
+        top: 60px;
+        left: 0px;
         border-radius: 3px;
-        height: 100%;
+        height: calc(100vh - 100px);
         line-height: 35px;
         padding: 10px 10px 30px 10px;
         text-align: left;
-        width: 340px;
+        width: 350px;
+        z-index: 99;
+        overflow: auto;
       }
 
-      #pano {
-        width: 200px;
-        height: 200px;
+      #nearby,#places {
+            display: flex;
+          align-items: center;
       }
-
-      #places-search,
-      #search-within-time-text {
-        width: 84%;
+        #nearby-text,#places-text {
+            flex: 3;
+        text-align: center;
+      }
+      #nearby-search,#places-search {
+            flex: 7;
+      }
+      #my-position{
+           text-align: center;
       }
 
       .text {
         font-size: 12px;
       }
 
-      #toggle-drawing {
+/*      #toggle-drawing {
         width: 27%;
         position: relative;
         margin-left: 10px;
@@ -79,7 +96,7 @@ html,
 
       #zoom-to-area {
         width: 24%;
-      }
+      }*/
 
       /*infowindow*/
       .info-left{
@@ -140,7 +157,7 @@ html,
             color: #0073bb;
         }
 
-        ul.list {
+        ul {
             list-style-type: none;
 
         }
@@ -159,14 +176,68 @@ html,
             margin-right: 1em;
         }
 
-    .icon {
-       width: 1em; height: 1em;
+    .icon1 {
+       width: 30px; height: 30px;
        vertical-align: -0.15em;
        fill: currentColor;
        overflow: hidden;
-
+        position: relative;
+         left: 10px;
+        top: 10px;
+            position: relative;
+    color: white;
        /*float: right;*/
        /*padding-top: 8px;*/
     }
 
+    .icon2 {
+       width: 1em; height: 1em;
+       vertical-align: -0.15em;
+       fill: currentColor;
+       overflow: hidden;
+    }
+ ul {
+    margin: 0;
+    padding:0;
 
+  }
+
+  li {
+    cursor:pointer;
+  }
+  ul.term,ul.mode {
+    display: flex;
+
+  }
+
+  ul.mode {
+    flex:1;
+
+  }
+
+  ul.term>li,ul.mode>li {
+    flex:1;
+    text-align: center;
+  }
+
+  ul.mode>li {
+    border-radius: 20px;
+  }
+  ul.list>li {
+    margin: 0 0 10px 15px;
+
+  }
+
+  .mode-selected {
+    color:#fff;
+    background-color: #000;
+  }
+
+  .mode-bar {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .close {
+    margin-left: 1em;
+  }

@@ -4,7 +4,8 @@
       var markers = [];
       // Create placemarkers array to use in multiple functions to have control
       // over the number of places that show.
-
+      var directionsDisplay;
+      var modes=['Driving','Walking','Bicycling','Transit'];
      //Initialize the map
      function initMap() {
 
@@ -56,7 +57,7 @@
                     vm.centerMarker().setMap(null);
                 }
                 place=results[0];
-                console.log(place);
+                //console.log(place);
                 map.setCenter(place.geometry.location);
                 //map.setZoom(15);
                 var title=place.address_components[0].short_name;
@@ -85,7 +86,7 @@
         if(typeof(place.location.coordinate)== "undefined"){
           return;
         }
-          createMarker(place,++i);
+          createMarker(place);
         });
         showListings();
         // for (var i = 0,len=all.length; i < len; i++) {
@@ -190,7 +191,7 @@ function newPlaceSearch (location,term) {
        var largeInfowindow = new google.maps.InfoWindow();
 
           var icon = {
-             url: 'http://chart.googleapis.com/chart?chst=d_map_spin&chld=1.15|0|0091ff|40|_|%E2%80%A2',
+             url: 'http://chart.googleapis.com/chart?chst=d_map_spin&chld=1.15|0|679df6|40|_|%E2%80%A2',
              size: new google.maps.Size(21, 34),
             origin: new google.maps.Point(0, 0),
             anchor: new google.maps.Point(10, 34),
@@ -219,7 +220,7 @@ function newPlaceSearch (location,term) {
 
       }
 
-         function createMarker(place,i) {
+         function createMarker(place) {
         //var placeLoc = place.geometry.location;
         // var icon = {
         //     url: place.icon,
@@ -250,7 +251,7 @@ function newPlaceSearch (location,term) {
           animation: google.maps.Animation.DROP
         });
         marker.place=place;
-        marker.navigateEnabled=false;
+        marker.navigateEnabled=ko.observable(false);
          // Push the marker to our array of markers.
           //markers.push(marker);
           vm.list.push(marker);
@@ -298,7 +299,7 @@ function newPlaceSearch (location,term) {
             //   categories+=',';
             //   categories+=categories_arr[1][0];
             // }
-            console.log(place.distance);
+           // console.log(place.distance);
             place.categories.forEach( function(e) {
               categories_arr.push(e[0]);
             });
@@ -322,14 +323,48 @@ function newPlaceSearch (location,term) {
 //newPlaceSearch('Silicon+Valley');
 searchPlaces({location:initial});
 
+ko.bindingHandlers.slideVisible = {
+    init: function(element, valueAccessor) {
+        var value = ko.utils.unwrapObservable(valueAccessor());
+        // Get the current value of the current property we're bound to
+        $(element).toggle(value);
+        // jQuery will hide/show the element depending on whether "value" or true or false
+    },
+
+    update: function(element, valueAccessor) {
+        // First get the latest data that we're bound to
+        var value = valueAccessor();
+
+        // Next, whether or not the supplied model property is observable, get its current value
+        var valueUnwrapped = ko.utils.unwrapObservable(value);
+
+        // Now manipulate the DOM element
+        valueUnwrapped == true?$(element).slideDown('slow'):$(element).slideUp('fast');
+    }
+};
+
     var ViewModel=function () {
       var self=this;
+      self.btn=ko.observable(false);
       self.list=ko.observableArray([]);
       self.centerMarker=ko.observable();
-      self.title=ko.observable('Silicon Valley');
+      self.title=ko.observable('your favourite!');
       self.center=ko.observable('');
       self.querystr=ko.observable('');
+      self.selectedMarker=ko.observable();
+      self.showDirections=ko.observable(false);
       self.terms=ko.observableArray(['food','restaurants','active life','medical']);
+      self.mode=ko.observableArray([]);
+      modes.forEach( function(e,i) {
+        var mode={};
+        mode.text=e;
+        mode.selected=ko.observable(false);
+        self.mode.push(mode);
+      });
+      self.mode()[0].selected(true);
+      self.toggleBtn=function () {
+        self.btn(!self.btn());
+      };
       self.listFiltered=ko.computed(function () {
         if($.trim(self.querystr()).length==0){
           return self.list();
@@ -365,7 +400,7 @@ searchPlaces({location:initial});
                               'Error: The Geolocation service failed.' :
                               'Error: Your browser doesn\'t support geolocation.');
       }
-      }
+      };
       self.termSerach=function (term) {
         searchPlaces({address:self.center()},term);
       };
@@ -374,37 +409,68 @@ searchPlaces({location:initial});
       self.listMouseOver=function (marker) {
         marker.setAnimation(google.maps.Animation.BOUNCE);
         //self.navigateEnabled(true);
-        //console.log(marker.navigateEnabled);
-        marker.navigateEnabled=true;
-        //console.log(marker.navigateEnabled);
+       // console.log(self.navigateEnabled());
+
+         //console.log(self.listFiltered()[0].navigateEnabled());
+       // console.log(marker.navigateEnabled());
+
+        //
       };
       self.listMouseOut=function (marker) {
         marker.setAnimation(null);
         //self.navigateEnabled(false);
-        //marker.navigateEnabled=false;
-        //console.log(marker.navigateEnabled);
+
+        //console.log(self.listFiltered()[0].navigateEnabled());
+        //console.log(marker.navigateEnabled());
+
+        //console.log(self.navigateEnabled());
       };
       self.listClick=function (marker) {
         marker.setAnimation(google.maps.Animation.BOUNCE);
         populateInfoWindow(marker, largeInfowindow);
+        self.listFiltered().forEach( function(e) {
+          e.navigateEnabled(false);
+        });
+        marker.navigateEnabled(true);
       };
 
-      self.displayDirections=function (marker) {
+      self.navigate=function (marker) {
+        self.selectedMarker(marker);
+        self.showDirections(true);
+        self.displayDirections(self.mode()[0]);
+      }
+      // self.selectMode=function (mode) {
+      //
+      // }
+      // self.unselectMode=function (mode) {
+      //    mode.selected(false);
+      // }
+      self.displayDirections=function (mode) {
          hideMarkers(self.list());
+         self.centerMarker().setMap(null);
         var directionsService = new google.maps.DirectionsService;
         // Get mode again from the user entered value.
-        var mode = ['DRIVING','WALKING','BICYCLING','TRANSIT'];
+        //var mode = ['DRIVING','WALKING','BICYCLING','TRANSIT'];
         // for(var i=0;i<4;i++){
           var request={
           // The origin is the passed in marker's position.
           origin: self.centerMarker().position,
-          destination: marker.position,
-          // travelMode: google.maps.TravelMode[mode[i]]
-          travelMode: google.maps.TravelMode.DRIVING
+          destination: self.selectedMarker().position,
+
+          travelMode: google.maps.TravelMode[mode.text.toUpperCase()]
+          //travelMode: google.maps.TravelMode.DRIVING
         };
         directionsService.route(request, function(response, status) {
           if (status === google.maps.DirectionsStatus.OK) {
-            var directionsDisplay = new google.maps.DirectionsRenderer({
+            self.mode().forEach( function(e) {
+               e.selected(false);
+            });
+              mode.selected(true);
+            if (typeof(directionsDisplay)!='undefined'){
+                directionsDisplay.setMap(null);
+                directionsDisplay.setPanel(null);
+            }
+            directionsDisplay = new google.maps.DirectionsRenderer({
               map: map,
               directions: response,
               draggable: true,
@@ -412,13 +478,22 @@ searchPlaces({location:initial});
                 strokeColor: 'green'
               },
               //panel:document.getElementById('mode'+(i+1))
-              panel:document.getElementById('mode1')
+              panel:document.getElementById('panel')
             });
           } else {
             window.alert('Directions request failed due to ' + status);
           }
         });
+      }
 
+      self.hideDirections=function () {
+        self.showDirections(false);
+        self.centerMarker().setMap(map);
+        if (typeof(directionsDisplay)!='undefined'){
+                directionsDisplay.setMap(null);
+                directionsDisplay.setPanel(null);
+            }
+        showListings();
       }
       };
       vm = new ViewModel();

@@ -9,37 +9,61 @@
 </head>
 <body>
     <div class="container">
-        <aside class="options-box">
+        <header>
+        <div id="menu-btn" data-bind="click:toggleBtn">
+            <svg class="icon1" aria-hidden="true">
+                <use xlink:href="#icon-daohang2"></use>
+            </svg>
+        </div>
+         </header>
+        <aside id="menu" data-bind="slideVisible:btn">
             <h1>Explore in <span data-bind="text:title"></span></h1>
-            <section>
-                Find<input type="text" id="nearby-search" data-bind="textInput: querystr,event: {input:filter,propertychange:filter}">
-                Near<input type="text" id="places-search" data-bind="value:center">
-                <input id="my-position" type="button" value="My Position" data-bind="click:myPosition">
+            <section id="list-view" data-bind="slideVisible:!showDirections()">
+                <div id="nearby">
+                    <div id="nearby-text">Find</div><input type="text" id="nearby-search" data-bind="textInput: querystr,event: {input:filter,propertychange:filter}">
+                </div>
+                <div id="places">
+                    <div id="places-text">Near</div><input type="text" id="places-search" data-bind="value:center">
+
+                </div>
+                <div id="my-position" data-bind="click:myPosition">Get My Position</div>
+                <h3>How about nearby..</h3>
                 <ul class="term" data-bind="foreach: terms">
                     <li data-bind="text:$data,click:$parent.termSerach"></li>
                 </ul>
                 <!-- ,event: {oninput:query,onpropertychange:query} -->
                 <!-- <input type="button" id="go-places" value="Go"> -->
-            </section>
+                 <!--  data-bind="slideVisible:!showDirections" -->
+            <!-- </section> -->
 
-            <section id="list-view">
+            <!-- <section id="list-view" data-bind="slideVisible:!showDirections()"> -->
+                <h3>Do you want to find..</h3>
                 <ul class="list" data-bind="foreach: listFiltered">
                     <li data-bind="event: { mouseover: $parent.listMouseOver,mouseout:$parent.listMouseOut}">
-                        <div class="list-item" data-bind="text: title,event: { click: $parent.listClick}">
-                            <!-- <span data-bind="text: id"></span>.<span data-bind="text: title"></span> -->
+                        <div class="list-item" data-bind="text: title,event: { click: $parent.listClick},style: {color: navigateEnabled() ? '#679df6' : color,fontWeight:  navigateEnabled() ? 'bold' : 'normal'}">
+                            <!-- <span data-bind="text: id"></span>.<span data-bind="text: title"></span>
+                            ,event:{onfocus:$parent.selectMode,onblur:$parent.unselectedMode}-->
                         </div>
-                        <div class="navigate">
-                            <svg class="icon" aria-hidden="true" data-bind="click:$parent.displayDirections">
+                        <div class="navigate" data-bind="slideVisible:navigateEnabled(),click:$parent.navigate">
+                            <svg class="icon2" aria-hidden="true">
                                 <use xlink:href="#icon-daohang3"></use>
                             </svg>
                         </div>
                     </li>
                 </ul>
             </section>
-            <section id="directions-panel">
-                <ul data-bind="foreach: mode">
-                    <li data-bind="text:$data,click:$parent.termSerach"></li>
+            <section id="directions-panel" data-bind="slideVisible:showDirections">
+            <div class="mode-bar">
+                <ul class="mode" data-bind="foreach: mode">
+                    <li data-bind="text:text,click:$parent.displayDirections,css:{'mode-selected':selected}"></li>
                 </ul>
+                <div class="close" data-bind="click:$root.hideDirections">
+                    <svg class="icon2" aria-hidden="true">
+                        <use xlink:href="#icon-iconfontclosesmall"></use>
+                    </svg>
+                </div>
+            </div>
+                <div id="panel"></div>
             </section>
         </aside>
         <article id="map"></article>
