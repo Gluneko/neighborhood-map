@@ -4,19 +4,19 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/style.css">
-    <!-- <link rel="stylesheet" href="css/bootstrap.min.css"> -->
+    <!-- <link href="https://fonts.googleapis.com/css?family=Baloo+Thambi" rel="stylesheet"> -->
     <title>Gluneko's neighborhood map</title>
 </head>
 <body>
     <div class="container">
         <header>
-        <div id="menu-btn" data-bind="click:toggleBtn">
+        <a id="menu-btn" data-bind="click:toggleBtn">
             <svg class="icon1" aria-hidden="true">
                 <use xlink:href="#icon-daohang2"></use>
             </svg>
-        </div>
+        </a>
          </header>
-        <aside id="menu" data-bind="slideVisible:btn">
+        <aside id="menu" data-bind="slideVisible:btn() && !mapError()">
             <h1>Explore in <span data-bind="text:title"></span></h1>
             <section id="list-view" data-bind="slideVisible:!showDirections()">
                 <div id="nearby">
@@ -24,49 +24,62 @@
                 </div>
                 <div id="places">
                     <div id="places-text">Near</div><input type="text" id="places-search" data-bind="value:center">
-
                 </div>
-                <div id="my-position" data-bind="click:myPosition">Get My Position</div>
+                <div id="search-empty" class="warning" data-bind="visible:searchEmpty">You must enter an area, or address.</div>
+                <div id="search-failed" class="warning" data-bind="visible:searchFailed">We could not find that location - try entering a more specific place.</div>
+                <a href="javascript:void(0);" id="my-position" data-bind="click:myPosition">Get My Position</a>
+                <div class="warning" data-bind="visible:locationError()===1">Geolocation service failed.</div>
+                <div class="warning" data-bind="visible:locationError()===2">Your browser doesn't support geolocation.</div>
                 <h3>How about nearby..</h3>
                 <ul class="term" data-bind="foreach: terms">
-                    <li data-bind="text:$data,click:$parent.termSerach"></li>
+                    <li><a href="javascript:void(0);" data-bind="text:$data,click:$parent.termSerach"></a></li>
                 </ul>
                 <!-- ,event: {oninput:query,onpropertychange:query} -->
                 <!-- <input type="button" id="go-places" value="Go"> -->
                  <!--  data-bind="slideVisible:!showDirections" -->
             <!-- </section> -->
 
-            <!-- <section id="list-view" data-bind="slideVisible:!showDirections()"> -->
+            <!-- <section id="list-view" data-bind="slideVisible:!showDirections()"> <-->
+                <section data-bind="visible:listFiltered().length>0&&!yelpError()">
                 <h3>Do you want to find..</h3>
                 <ul class="list" data-bind="foreach: listFiltered">
                     <li data-bind="event: { mouseover: $parent.listMouseOver,mouseout:$parent.listMouseOut}">
-                        <div class="list-item" data-bind="text: title,event: { click: $parent.listClick},style: {color: navigateEnabled() ? '#679df6' : color,fontWeight:  navigateEnabled() ? 'bold' : 'normal'}">
+                        <a href="javascript:void(0);" class="list-item" data-bind="text: title,event: { click: $parent.listClick},style: {color: navigateEnabled() ? '#679df6' : '#525454',fontWeight:  navigateEnabled() ? 'bold' : 'normal'}">
                             <!-- <span data-bind="text: id"></span>.<span data-bind="text: title"></span>
                             ,event:{onfocus:$parent.selectMode,onblur:$parent.unselectedMode}-->
-                        </div>
-                        <div class="navigate" data-bind="slideVisible:navigateEnabled(),click:$parent.navigate">
+                        </a>
+                        <a href="javascript:void(0);" class="navigate" data-bind="slideVisible:navigateEnabled(),click:$parent.navigate">
                             <svg class="icon2" aria-hidden="true">
                                 <use xlink:href="#icon-daohang3"></use>
                             </svg>
-                        </div>
+                        </a>
                     </li>
                 </ul>
+                </section>
+                <section class="warning" data-bind="visible:listFiltered().length===0&&!yelpError()">
+                    <h3>No results</h3>
+                </section>
+                <section class="warning" data-bind="visible:yelpError">
+                    <h3>Oooops...Yelp seems not working now</h3>
+                </section>
             </section>
             <section id="directions-panel" data-bind="slideVisible:showDirections">
             <div class="mode-bar">
                 <ul class="mode" data-bind="foreach: mode">
-                    <li data-bind="text:text,click:$parent.displayDirections,css:{'mode-selected':selected}"></li>
+                    <li><a href="javascript:void(0);" data-bind="text:text,click:$parent.displayDirections,css:{'mode-selected':selected}"></a></li>
                 </ul>
-                <div class="close" data-bind="click:$root.hideDirections">
+                <a class="close" data-bind="click:$root.hideDirections">
                     <svg class="icon2" aria-hidden="true">
                         <use xlink:href="#icon-iconfontclosesmall"></use>
                     </svg>
-                </div>
+                </a>
             </div>
-                <div id="panel"></div>
+                <div id="panel" data-bind="visible:!directionsError()"></div>
+                <div id="directions-error" class="warning" data-bind="visible:directionsError"><h1>Oooops...Directions service seems not working now</h1></div>
             </section>
         </aside>
-        <article id="map"></article>
+        <article id="map" data-bind="visible:!mapError()"></article>
+        <article id="map-error" class="warning" data-bind="visible:mapError"><h1>Oooops...Google maps seems not working now</h1></article>
     </div>
     <script src="http://code.jquery.com/jquery-latest.js"></script>
     <!-- <script src="js/lib/bootstrap.min.js"></script> -->

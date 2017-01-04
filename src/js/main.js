@@ -4,14 +4,16 @@
       var markers = [];
       // Create placemarkers array to use in multiple functions to have control
       // over the number of places that show.
+      var placesSearch;
       var directionsDisplay;
+       var largeInfowindow;
+       var icon;
       var modes=['Driving','Walking','Bicycling','Transit'];
+      var initial={lat:37.387474,lng:-122.057543},latlng={lat:0,lng:0};
      //Initialize the map
      function initMap() {
-
-      var initial={lat:37.387474,lng:-122.057543},latlng={lat:0,lng:0};
-
-
+      vm.mapError(false);
+      //console.log(vm.btn());
       //  Create a new map center in Silicon Valley.
        map=new google.maps.Map(document.getElementById('map'),{
           center:initial,
@@ -25,7 +27,7 @@
       // };
 
       // This autocomplete is for use in the geocoder entry box.
-       var placesSearch = new google.maps.places.Autocomplete(
+       placesSearch = new google.maps.places.Autocomplete(
         (document.getElementById('places-search')),
         {types: ['geocode']});
         // var placesSearch = new google.maps.places.Autocomplete(
@@ -36,23 +38,37 @@
         placesSearch.addListener('place_changed', function () {
           searchPlaces({address:vm.center()});
         });
+        largeInfowindow = new google.maps.InfoWindow();
 
+          icon = {
+             url: 'http://chart.googleapis.com/chart?chst=d_map_spin&chld=1.15|0|679df6|40|_|%E2%80%A2',
+             size: new google.maps.Size(21, 34),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(10, 34),
+            scaledSize: new google.maps.Size(21, 34)
+          };
+//newPlaceSearch('Silicon+Valley');
+searchPlaces({location:initial});
+}
 
-      // This function takes the input value in the find area text input
+// This function takes the input value in the find area text input
       // locates it, and then zooms into that area. This is so that the user can
       // show all listings, then decide to focus on one area of the map.
       function searchPlaces(request,term) {
        // console.log(request);
+       vm.locationError(0);
         if(typeof(request.address)!='undefined'&&request.address==''){
-          alert('You must enter an area, or address.');
+          vm.searchEmpty(true);
           return;
         }
+        vm.searchEmpty(false);
         var geocoder = new google.maps.Geocoder();
            // Geocode the address/area entered to get the center. Then, center the map
           // on it and zoom in
           geocoder.geocode(
             request, function(results, status) {
               if (status == google.maps.GeocoderStatus.OK) {
+                vm.searchFailed(false);
                 if(vm.centerMarker()!=null){
                     vm.centerMarker().setMap(null);
                 }
@@ -70,16 +86,15 @@
                 createCenterMarker(place);
                 newPlaceSearch(place.formatted_address,term);
               } else {
-                window.alert('We could not find that location - try entering a more' +
-                    ' specific place.');
+                vm.searchFailed(true);
               }
             });
       }
      // service = new google.maps.places.PlacesService(map);
      // service.nearbySearch(request, nearbyCallback);
       function nearbySearch(results) {
-        hideMarkers(vm.list());
-        vm.list.removeAll();
+
+
         var all=results.businesses;
         var i=0;
         all.forEach( function(place) {
@@ -89,15 +104,6 @@
           createMarker(place);
         });
         showListings();
-        // for (var i = 0,len=all.length; i < len; i++) {
-        //   if(typeof(all[i].location.coordinate)== "undefined")
-        //     continue;
-        //   latlng.lat=all[i].location.coordinate.latitude;
-        //   latlng.lng=all[i].location.coordinate.longitude;
-        //   console.log(latlng);
-        //   (results.businesses[i]);
-          //console.log(all[i].location.coordinate);
-        //}
     }
 
       // This function will loop through the markers array and display them all.
@@ -139,6 +145,8 @@ var yelp_url = 'http://api.yelp.com/v2/search',
 
 
 function newPlaceSearch (location,term) {
+   hideMarkers(vm.list());
+   vm.list.removeAll();
       var parameters = {
       oauth_consumer_key: yelp_key,
       oauth_token: yelp_token,
@@ -160,6 +168,9 @@ function newPlaceSearch (location,term) {
     var encodedSignature = oauthSignature.generate('GET',yelp_url, parameters, yelp_key_secret, yelp_token_secret);
     parameters.oauth_signature = encodedSignature;
 
+    var yelpRequestTimeout=setTimeout(function () {
+       vm.yelpError(true);
+    },8000);
     var settings = {
       url: yelp_url,
       data: parameters,
@@ -167,6 +178,9 @@ function newPlaceSearch (location,term) {
       dataType: 'jsonp',
       success: function(results) {
         // Do stuff with results
+        //console.log(vm.yelpError());
+        vm.yelpError(false);
+        clearTimeout(yelpRequestTimeout);
         nearbySearch(results);
        // console.log(results.businesses[0].location.coordinate);
 
@@ -174,7 +188,9 @@ function newPlaceSearch (location,term) {
       fail: function(xhr, status, error) {
       // Do stuff on fail
       //清除所有标记。。
-      console.log("An AJAX error occured: " + status + "\nError: " + error + "\nError detail: " + xhr.responseText);
+      //console.log("An AJAX error occured: " + status + "\nError: " + error + "\nError detail: " + xhr.responseText);
+      //console.log(vm.yelpError());
+
     }
     };
 
@@ -182,21 +198,7 @@ function newPlaceSearch (location,term) {
     $.ajax(settings);
 }
 
-       // Create a searchbox in order to execute a places search
-        // var searchBox = new google.maps.places.SearchBox(
-        //     document.getElementById('places-search'));
-        // // Bias the searchbox to within the bounds of the map.
-        // searchBox.setBounds(map.getBounds());
 
-       var largeInfowindow = new google.maps.InfoWindow();
-
-          var icon = {
-             url: 'http://chart.googleapis.com/chart?chst=d_map_spin&chld=1.15|0|679df6|40|_|%E2%80%A2',
-             size: new google.maps.Size(21, 34),
-            origin: new google.maps.Point(0, 0),
-            anchor: new google.maps.Point(10, 34),
-            scaledSize: new google.maps.Size(21, 34)
-          };
 
 
          function createCenterMarker(place) {
@@ -221,22 +223,7 @@ function newPlaceSearch (location,term) {
       }
 
          function createMarker(place) {
-        //var placeLoc = place.geometry.location;
-        // var icon = {
-        //     url: place.icon,
-        //     size: new google.maps.Size(35, 35),
-        //     origin: new google.maps.Point(0, 0),
-        //     anchor: new google.maps.Point(15, 34),
-        //     scaledSize: new google.maps.Size(25, 25)
-        //   };
-        //console.log(place.location);
-        //console.log(place.location.coordinate);
-        //latlng.lat=place.location.coordinate.latitude;
-        //latlng.lng=place.location.coordinate.longitude;
         var coordinate=place.location.coordinate;
-        // if(typeof(coordinate)== "undefined"){
-        //   return;
-        // }
         latlng.lat=coordinate.latitude;
         latlng.lng=coordinate.longitude;
         var marker = new google.maps.Marker({
@@ -258,6 +245,13 @@ function newPlaceSearch (location,term) {
        // Create an onclick event to open the large infowindow at each marker.
           marker.addListener('click', function() {
             populateInfoWindow(this, largeInfowindow);
+            vm.listFiltered().forEach( function(e) {
+              if(e.id===marker.id){
+                e.navigateEnabled(true);
+              }else{
+                 e.navigateEnabled(false);
+              }
+            });
           });
           // Two event listeners - one for mouseover, one for mouseout,
           // to make the marker bounce or not.
@@ -284,35 +278,37 @@ function newPlaceSearch (location,term) {
             infowindow.marker = null;
           });
           var place=marker.place,
-          name=place.name,
-          address=place.location.address,
-          img=place.image_url,
-          rating_img=place.rating_img_url,
-          url=place.url,
-          categories_arr=[],//=place.categories[0].join(','),
-          //rating_img_small=place.rating_img_url_small,
-          //rating_img_large=place.rating_img_url_large,
-          review_count=place.review_count;
-          //console.log(address);
-          // for(var i=0,categories,len=categories_arr[0].length;i<len;i++){
-            // if(place.categories.length>1){
-            //   categories+=',';
-            //   categories+=categories_arr[1][0];
-            // }
-           // console.log(place.distance);
+          content='<div class="info"><section class="info-left">';
+          if(place.image_url){
+            content+='<img src="'+place.image_url+'">';
+          }
+          content+='</section><section class="info-right">';
+          if(place.name){
+            content+='<div class="info-name">';
+            content+=(place.url)?'<a class="info-link" href="'+place.url+'">'+place.name+'</a></div>':place.name+'</div>';
+          }
+          if(place.location.address){
+              content+='<div class="info-addr">'+place.location.address+'</div>';
+          }
+          content+='<div class="info-rating">';
+          if(place.rating_img_url){
+            content+='<img class="info-rating-left" src="'+place.rating_img_url+'">';
+          }
+          content+='<a href="https://www.yelp.com"><img class="info-yelp" src="img/yelp.png"></a></div>';
+          if(place.review_count){
+            content+='<div class="info-review">Based on '+place.review_count+' reviews</div>';
+          }
+           if(place.categories){
+            var categories_arr=[];
             place.categories.forEach( function(e) {
               categories_arr.push(e[0]);
             });
             var categories=categories_arr.slice(0,2).join(',');
+            content+='<div class="info-cate">'+categories+'<div>';
+           }
+           content+='</section></div>';
           // }
-          var content='<div class="info"><section class="info-left">'+'<img src="'+img+'">'+'</section>'+'<section class="info-right">'+
-            '<div class="info-name"><a class="info-link" href="'+url+'">'+name+'</a></div>'+'<div class="info-addr">'+address+'</div>'+
-            '<div class="info-rating">'+
-            '<img class="info-rating-left" src="'+rating_img+'">'+
-            '<img class="info-yelp" src="img/yelp.png"></div>'+
-            '<div class="info-review">Based on '+review_count+' reviews</div>'+
-            '<div class="info-cate">'+categories+'<div>'+
-          '</section></div>';
+
           infowindow.setContent(content);
           // Open the infowindow on the correct marker.
           infowindow.open(map, marker);
@@ -320,10 +316,13 @@ function newPlaceSearch (location,term) {
       }
 
 
-//newPlaceSearch('Silicon+Valley');
-searchPlaces({location:initial});
 
-ko.bindingHandlers.slideVisible = {
+function googleError(){
+  console.log(vm.mapError());
+  vm.mapError(true);
+}
+
+      ko.bindingHandlers.slideVisible = {
     init: function(element, valueAccessor) {
         var value = ko.utils.unwrapObservable(valueAccessor());
         // Get the current value of the current property we're bound to
@@ -343,7 +342,7 @@ ko.bindingHandlers.slideVisible = {
     }
 };
 
-    var ViewModel=function () {
+ var ViewModel=function () {
       var self=this;
       self.btn=ko.observable(false);
       self.list=ko.observableArray([]);
@@ -353,6 +352,12 @@ ko.bindingHandlers.slideVisible = {
       self.querystr=ko.observable('');
       self.selectedMarker=ko.observable();
       self.showDirections=ko.observable(false);
+      self.mapError=ko.observable(false);
+      self.yelpError=ko.observable(false);
+      self.directionsError=ko.observable(false);
+      self.searchEmpty=ko.observable(false);
+      self.searchFailed=ko.observable(false);
+      self.locationError=ko.observable(0);
       self.terms=ko.observableArray(['food','restaurants','active life','medical']);
       self.mode=ko.observableArray([]);
       modes.forEach( function(e,i) {
@@ -364,6 +369,9 @@ ko.bindingHandlers.slideVisible = {
       self.mode()[0].selected(true);
       self.toggleBtn=function () {
         self.btn(!self.btn());
+       // console.log(self.btn());
+       // console.log(self.mapError());
+
       };
       self.listFiltered=ko.computed(function () {
         if($.trim(self.querystr()).length==0){
@@ -387,19 +395,14 @@ ko.bindingHandlers.slideVisible = {
             initial.lat=position.coords.latitude;
             initial.lng=position.coords.longitude;
             searchPlaces({location:initial});
+            self.locationError(0);
           }, function() {
-            handleLocationError(true);
+            self.locationError(1);
           });
         } else {
           // Browser doesn't support Geolocation
-          handleLocationError(false);
+          self.locationError(2);
         }
-        function handleLocationError(browserHasGeolocation) {
-
-        alert(browserHasGeolocation ?
-                              'Error: The Geolocation service failed.' :
-                              'Error: Your browser doesn\'t support geolocation.');
-      }
       };
       self.termSerach=function (term) {
         searchPlaces({address:self.center()},term);
@@ -448,6 +451,10 @@ ko.bindingHandlers.slideVisible = {
       self.displayDirections=function (mode) {
          hideMarkers(self.list());
          self.centerMarker().setMap(null);
+         self.mode().forEach( function(e) {
+               e.selected(false);
+            });
+              mode.selected(true);
         var directionsService = new google.maps.DirectionsService;
         // Get mode again from the user entered value.
         //var mode = ['DRIVING','WALKING','BICYCLING','TRANSIT'];
@@ -462,10 +469,7 @@ ko.bindingHandlers.slideVisible = {
         };
         directionsService.route(request, function(response, status) {
           if (status === google.maps.DirectionsStatus.OK) {
-            self.mode().forEach( function(e) {
-               e.selected(false);
-            });
-              mode.selected(true);
+            vm.directionsError(false);
             if (typeof(directionsDisplay)!='undefined'){
                 directionsDisplay.setMap(null);
                 directionsDisplay.setPanel(null);
@@ -481,7 +485,8 @@ ko.bindingHandlers.slideVisible = {
               panel:document.getElementById('panel')
             });
           } else {
-            window.alert('Directions request failed due to ' + status);
+            //window.alert('Directions request failed due to ' + status);
+            vm.directionsError(true);
           }
         });
       }
@@ -496,12 +501,6 @@ ko.bindingHandlers.slideVisible = {
         showListings();
       }
       };
+
       vm = new ViewModel();
       ko.applyBindings(vm);
-}
-
-function googleError(){
-  alert('failed!');
-}
-
-
