@@ -167,7 +167,9 @@ html,
         color: #666;
         /*width:66.6%;*/
         /*flex-direction: row;*/
+        max-width: 200px;
         flex: 1;
+        overflow: hidden;
         }
 
         .info{
@@ -301,7 +303,7 @@ html,
   #menu {
         line-height: 25px;
         width: 280px;
-        font-size: 12px;
+        font-size: 13px;
       }
       h1 {
         font-size: 18px;
@@ -317,4 +319,38 @@ html,
     width: 48%;
     display: inline-block;
   }
+
+  /*infowindow*/
+      .info-left img{
+        /*width:33.3%;*/
+        /*display: -webkit-flex;*/
+            width: 80px;
+            height: 80px;
+      }
+
+      .info-name {
+        font-size: 16px;
+      }
+
+      .info-addr{
+        font-size: 11px;
+      }
+
+        .info-rating{
+          height: 25px;
+        }
+
+        .info-right{
+       max-width: 160px;
+
+        }
+
+        .info{
+            font-size: 10px;
+        }
+
+        .info-cate {
+          line-height: 1em;
+        }
+
 }
