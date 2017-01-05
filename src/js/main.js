@@ -1,19 +1,20 @@
 //Create a map variable
      var map;
       // Create a new blank array for all the listing markers.
-      var markers = [];
+      //var markers = [];
       // Create placemarkers array to use in multiple functions to have control
       // over the number of places that show.
       var placesSearch;
       var directionsDisplay;
-       var largeInfowindow;
-       var icon;
+      var largeInfowindow;
+
       var modes=['Driving','Walking','Bicycling','Transit'];
       var initial={lat:37.387474,lng:-122.057543},latlng={lat:0,lng:0};
+
+       var icon;
      //Initialize the map
      function initMap() {
       vm.mapError(false);
-      //console.log(vm.btn());
       //  Create a new map center in Silicon Valley.
        map=new google.maps.Map(document.getElementById('map'),{
           center:initial,
@@ -21,33 +22,28 @@
           mapTypeControl: false
        });
 
-      //  var request = {
-      //   location: initial,
-      //   radius: '5000',
-      // };
-
       // This autocomplete is for use in the geocoder entry box.
        placesSearch = new google.maps.places.Autocomplete(
         (document.getElementById('places-search')),
         {types: ['geocode']});
-        // var placesSearch = new google.maps.places.Autocomplete(
-        //     document.getElementById('places-search'));
 
         // Listen for the event fired when the user selects a prediction from the
         // picklist and retrieve more details for that place.
         placesSearch.addListener('place_changed', function () {
           searchPlaces({address:vm.center()});
         });
+
         largeInfowindow = new google.maps.InfoWindow();
 
-          icon = {
+        icon = {
              url: 'http://chart.googleapis.com/chart?chst=d_map_spin&chld=1.15|0|679df6|40|_|%E2%80%A2',
              size: new google.maps.Size(21, 34),
             origin: new google.maps.Point(0, 0),
             anchor: new google.maps.Point(10, 34),
             scaledSize: new google.maps.Size(21, 34)
           };
-//newPlaceSearch('Silicon+Valley');
+
+
 searchPlaces({location:initial});
 }
 
@@ -69,13 +65,11 @@ searchPlaces({location:initial});
             request, function(results, status) {
               if (status == google.maps.GeocoderStatus.OK) {
                 vm.searchFailed(false);
-                if(vm.centerMarker()!=null){
-                    vm.centerMarker().setMap(null);
+                if(cm.marker()){
+                    cm.marker().setMap(null);
                 }
                 place=results[0];
-                //console.log(place);
                 map.setCenter(place.geometry.location);
-                //map.setZoom(15);
                 var title=place.address_components[0].short_name;
                 var center=place.formatted_address;
                 if(typeof(title)== "undefined"){
@@ -83,49 +77,12 @@ searchPlaces({location:initial});
                 }
                 vm.title(title);
                 vm.center(center);
-                createCenterMarker(place);
+                cm.create(place);
                 newPlaceSearch(place.formatted_address,term);
               } else {
                 vm.searchFailed(true);
               }
             });
-      }
-     // service = new google.maps.places.PlacesService(map);
-     // service.nearbySearch(request, nearbyCallback);
-      function nearbySearch(results) {
-
-
-        var all=results.businesses;
-        var i=0;
-        all.forEach( function(place) {
-        if(typeof(place.location.coordinate)== "undefined"){
-          return;
-        }
-          createMarker(place);
-        });
-        showListings();
-    }
-
-      // This function will loop through the markers array and display them all.
-      function showListings() {
-        var bounds = new google.maps.LatLngBounds(),
-        // Extend the boundaries of the map for each marker and display the marker
-        markers=vm.listFiltered(),
-        len=markers.length;
-        if(len===0) {
-          return;
-        }
-        for (var i = 0; i < len; i++) {
-          markers[i].setMap(map);
-          bounds.extend(markers[i].position);
-        }
-        map.fitBounds(bounds);
-      }
-      // This function will loop through the listings and hide them all.
-      function hideMarkers(markers) {
-        for (var i = 0; i < markers.length; i++) {
-          markers[i].setMap(null);
-        }
       }
 
         /**
@@ -145,8 +102,8 @@ var yelp_url = 'http://api.yelp.com/v2/search',
 
 
 function newPlaceSearch (location,term) {
-   hideMarkers(vm.list());
-   vm.list.removeAll();
+   pm.hide();
+   pm.markers.removeAll();
       var parameters = {
       oauth_consumer_key: yelp_key,
       oauth_token: yelp_token,
@@ -178,16 +135,13 @@ function newPlaceSearch (location,term) {
       dataType: 'jsonp',
       success: function(results) {
         // Do stuff with results
-        //console.log(vm.yelpError());
         vm.yelpError(false);
         clearTimeout(yelpRequestTimeout);
         nearbySearch(results);
-       // console.log(results.businesses[0].location.coordinate);
 
       },
       fail: function(xhr, status, error) {
       // Do stuff on fail
-      //清除所有标记。。
       //console.log("An AJAX error occured: " + status + "\nError: " + error + "\nError detail: " + xhr.responseText);
       //console.log(vm.yelpError());
 
@@ -198,59 +152,72 @@ function newPlaceSearch (location,term) {
     $.ajax(settings);
 }
 
-
-
-
-         function createCenterMarker(place) {
-        var marker = new google.maps.Marker({
-          map: map,
-          position: place.geometry.location,
-          title: place.name,
-          icon: icon,
-          id: place.id,
-          animation: google.maps.Animation.DROP
+      function nearbySearch(results) {
+        var all=results.businesses;
+        all.forEach( function(place) {
+        if(typeof(place.location.coordinate)== "undefined"){
+          return;
+        }
+          pm.create(place);
         });
-          vm.centerMarker(marker);
-          // Two event listeners - one for mouseover, one for mouseout,
-          // to make the marker bounce or not.
-          marker.addListener('mouseover', function() {
-            this.setAnimation(google.maps.Animation.BOUNCE);
-          });
-          marker.addListener('mouseout', function() {
-            this.setAnimation(null);
-          });
+        vm.showListings();
+    }
 
-      }
 
-         function createMarker(place) {
+
+
+
+
+
+
+
+
+function googleError(){
+  vm.mapError(true);
+}
+
+      ko.bindingHandlers.slideVisible = {
+    init: function(element, valueAccessor) {
+        var value = ko.utils.unwrapObservable(valueAccessor());
+        // Get the current value of the current property we're bound to
+        $(element).toggle(value);
+        // jQuery will hide/show the element depending on whether "value" or true or false
+    },
+
+    update: function(element, valueAccessor) {
+        // First get the latest data that we're bound to
+        var value = valueAccessor();
+
+        // Next, whether or not the supplied model property is observable, get its current value
+        var valueUnwrapped = ko.utils.unwrapObservable(value);
+
+        // Now manipulate the DOM element
+        valueUnwrapped == true?$(element).slideDown('slow'):$(element).slideUp('fast');
+    }
+};
+var PlaceMarkers=function () {
+  var self=this;
+  self.markers=ko.observableArray([]);
+  self.selected=ko.observable();
+  self.create=function(place) {
         var coordinate=place.location.coordinate;
         latlng.lat=coordinate.latitude;
         latlng.lng=coordinate.longitude;
         var marker = new google.maps.Marker({
-          // map: map,
           position: latlng,
-          //label: i.toString(),
           title: place.name,
-          //console.log(place.name);
-          //icon: icon,
           id: place.id,
-          //id: i,
           animation: google.maps.Animation.DROP
         });
         marker.place=place;
         marker.navigateEnabled=ko.observable(false);
          // Push the marker to our array of markers.
-          //markers.push(marker);
-          vm.list.push(marker);
+          self.markers.push(marker);
        // Create an onclick event to open the large infowindow at each marker.
           marker.addListener('click', function() {
-            populateInfoWindow(this, largeInfowindow);
-            vm.listFiltered().forEach( function(e) {
-              if(e.id===marker.id){
-                e.navigateEnabled(true);
-              }else{
-                 e.navigateEnabled(false);
-              }
+            self.populateInfoWindow(this, largeInfowindow);
+            self.markers().forEach( function(e) {
+              (e.id===marker.id)?e.navigateEnabled(true):e.navigateEnabled(false);
             });
           });
           // Two event listeners - one for mouseover, one for mouseout,
@@ -262,12 +229,22 @@ function newPlaceSearch (location,term) {
             this.setAnimation(null);
           });
 
-      }
+      };
+
+         // This function will loop through the place markers and hide them all.
+       self.hide=function() {
+        // for (var i = 0,len=self.markers().length; i < len; i++) {
+        //   self.markers()[i].setMap(null);
+        // }
+        self.markers().forEach( function(marker) {
+          marker.setMap(null);
+        });
+      };
 
       // This function populates the infowindow when the marker is clicked. We'll only allow
       // one infowindow which will open at the marker that is clicked, and populate based
       // on that markers position.
-      function populateInfoWindow(marker, infowindow) {
+       self.populateInfoWindow=function(marker, infowindow) {
         // Check to make sure the infowindow is not already opened on this marker.
         if (infowindow.marker != marker) {
           // Clear the infowindow content to give the yelp time to load.
@@ -313,44 +290,43 @@ function newPlaceSearch (location,term) {
           // Open the infowindow on the correct marker.
           infowindow.open(map, marker);
         }
-      }
+      };
+};
+var CenterMarker=function () {
+  var self=this;
+  self.marker=ko.observable();
 
+  self.create=function(place) {
+        var marker = new google.maps.Marker({
+          map: map,
+          position: place.geometry.location,
+          title: place.name,
+          icon: icon,
+          id: place.id,
+          animation: google.maps.Animation.DROP
+        });
+          self.marker(marker);
+          // Two event listeners - one for mouseover, one for mouseout,
+          // to make the marker bounce or not.
+          marker.addListener('mouseover', function() {
+            this.setAnimation(google.maps.Animation.BOUNCE);
+          });
+          marker.addListener('mouseout', function() {
+            this.setAnimation(null);
+          });
 
-
-function googleError(){
-  console.log(vm.mapError());
-  vm.mapError(true);
-}
-
-      ko.bindingHandlers.slideVisible = {
-    init: function(element, valueAccessor) {
-        var value = ko.utils.unwrapObservable(valueAccessor());
-        // Get the current value of the current property we're bound to
-        $(element).toggle(value);
-        // jQuery will hide/show the element depending on whether "value" or true or false
-    },
-
-    update: function(element, valueAccessor) {
-        // First get the latest data that we're bound to
-        var value = valueAccessor();
-
-        // Next, whether or not the supplied model property is observable, get its current value
-        var valueUnwrapped = ko.utils.unwrapObservable(value);
-
-        // Now manipulate the DOM element
-        valueUnwrapped == true?$(element).slideDown('slow'):$(element).slideUp('fast');
-    }
+      };
 };
 
  var ViewModel=function () {
       var self=this;
       self.btn=ko.observable(false);
-      self.list=ko.observableArray([]);
-      self.centerMarker=ko.observable();
+     // self.list=ko.observableArray([]);
+     // self.centerMarker=ko.observable();
       self.title=ko.observable('your favourite!');
       self.center=ko.observable('');
       self.querystr=ko.observable('');
-      self.selectedMarker=ko.observable();
+      //self.selectedMarker=ko.observable();
       self.showDirections=ko.observable(false);
       self.mapError=ko.observable(false);
       self.yelpError=ko.observable(false);
@@ -369,22 +345,35 @@ function googleError(){
       self.mode()[0].selected(true);
       self.toggleBtn=function () {
         self.btn(!self.btn());
-       // console.log(self.btn());
-       // console.log(self.mapError());
-
       };
-      self.listFiltered=ko.computed(function () {
+      self.list=ko.computed(function () {
         if($.trim(self.querystr()).length==0){
-          return self.list();
+          return pm.markers();
         }else {
-          return ko.utils.arrayFilter(self.list(), function(marker) {
+          return ko.utils.arrayFilter(pm.markers(), function(marker) {
             return marker.title.toLowerCase().indexOf(self.querystr().toLowerCase())>-1;
         });
         }
       });
+            // This function will loop through the markers array and display them all.
+       self.showListings=function() {
+        var bounds = new google.maps.LatLngBounds(),
+        // Extend the boundaries of the map for each marker and display the marker
+        markers=self.list(),
+        len=markers.length;
+        if(len===0) {
+          return;
+        }
+        for (var i = 0; i < len; i++) {
+          markers[i].setMap(map);
+          bounds.extend(markers[i].position);
+        }
+        map.fitBounds(bounds);
+      };
+
       self.filter=function () {
-        hideMarkers(self.list());
-        showListings();
+        pm.hide();
+        self.showListings();
       };
       // Bias the autocomplete object to the user's geographical location,
       // as supplied by the browser's 'navigator.geolocation' object.
@@ -408,61 +397,43 @@ function googleError(){
         searchPlaces({address:self.center()},term);
       };
 
-     // self.navigateEnabled=ko.observable(false);
       self.listMouseOver=function (marker) {
         marker.setAnimation(google.maps.Animation.BOUNCE);
-        //self.navigateEnabled(true);
-       // console.log(self.navigateEnabled());
-
-         //console.log(self.listFiltered()[0].navigateEnabled());
-       // console.log(marker.navigateEnabled());
-
-        //
       };
       self.listMouseOut=function (marker) {
         marker.setAnimation(null);
-        //self.navigateEnabled(false);
-
-        //console.log(self.listFiltered()[0].navigateEnabled());
-        //console.log(marker.navigateEnabled());
-
-        //console.log(self.navigateEnabled());
       };
       self.listClick=function (marker) {
         marker.setAnimation(google.maps.Animation.BOUNCE);
-        populateInfoWindow(marker, largeInfowindow);
-        self.listFiltered().forEach( function(e) {
+        pm.populateInfoWindow(marker, largeInfowindow);
+        self.list().forEach( function(e) {
           e.navigateEnabled(false);
         });
         marker.navigateEnabled(true);
       };
 
       self.navigate=function (marker) {
-        self.selectedMarker(marker);
+        pm.selected(marker);
         self.showDirections(true);
         self.displayDirections(self.mode()[0]);
       }
-      // self.selectMode=function (mode) {
-      //
-      // }
-      // self.unselectMode=function (mode) {
-      //    mode.selected(false);
-      // }
+
       self.displayDirections=function (mode) {
-         hideMarkers(self.list());
-         self.centerMarker().setMap(null);
+         pm.hide();
+         cm.marker().setMap(null);
          self.mode().forEach( function(e) {
                e.selected(false);
             });
               mode.selected(true);
         var directionsService = new google.maps.DirectionsService;
-        // Get mode again from the user entered value.
-        //var mode = ['DRIVING','WALKING','BICYCLING','TRANSIT'];
-        // for(var i=0;i<4;i++){
+          if (typeof(directionsDisplay)!='undefined'){
+                directionsDisplay.setMap(null);
+                directionsDisplay.setPanel(null);
+            }
           var request={
-          // The origin is the passed in marker's position.
-          origin: self.centerMarker().position,
-          destination: self.selectedMarker().position,
+          // The origin is the canter marker's position.
+          origin: cm.marker().position,
+          destination: pm.selected().position,
 
           travelMode: google.maps.TravelMode[mode.text.toUpperCase()]
           //travelMode: google.maps.TravelMode.DRIVING
@@ -470,10 +441,7 @@ function googleError(){
         directionsService.route(request, function(response, status) {
           if (status === google.maps.DirectionsStatus.OK) {
             vm.directionsError(false);
-            if (typeof(directionsDisplay)!='undefined'){
-                directionsDisplay.setMap(null);
-                directionsDisplay.setPanel(null);
-            }
+
             directionsDisplay = new google.maps.DirectionsRenderer({
               map: map,
               directions: response,
@@ -493,14 +461,16 @@ function googleError(){
 
       self.hideDirections=function () {
         self.showDirections(false);
-        self.centerMarker().setMap(map);
+        cm.marker().setMap(map);
         if (typeof(directionsDisplay)!='undefined'){
                 directionsDisplay.setMap(null);
                 directionsDisplay.setPanel(null);
             }
-        showListings();
+        self.showListings();
       }
       };
 
-      vm = new ViewModel();
+      var cm=new CenterMarker();
+      var pm=new PlaceMarkers();
+      var vm=new ViewModel();
       ko.applyBindings(vm);
