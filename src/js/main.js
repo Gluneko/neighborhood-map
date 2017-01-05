@@ -1,21 +1,22 @@
-//Create a map variable
-     var map;
-      // Create a new blank array for all the listing markers.
-      //var markers = [];
-      // Create placemarkers array to use in multiple functions to have control
-      // over the number of places that show.
+   var map;
       var placesSearch;
       var directionsDisplay;
       var largeInfowindow;
 
       var modes=['Driving','Walking','Bicycling','Transit'];
-      var initial={lat:37.387474,lng:-122.057543},latlng={lat:0,lng:0};
-
+      // The coordinate of Silcon Valley.
+      var initial={lat:37.387474,lng:-122.057543};
+      // Used for yelp place search.
+      var latlng={lat:0,lng:0};
+      // The icon of center marker i.e. the location you tend to search around.
        var icon;
-     //Initialize the map
+
+/**
+* @description Initialize the map which center in Silicon Valley
+* if the google map request succeeds.
+*/
      function initMap() {
       vm.mapError(false);
-      //  Create a new map center in Silicon Valley.
        map=new google.maps.Map(document.getElementById('map'),{
           center:initial,
           zoom:15,
@@ -43,28 +44,30 @@
             scaledSize: new google.maps.Size(21, 34)
           };
 
-
-searchPlaces({location:initial});
+  // Start a new search around initial location.
+  searchPlaces({location:initial});
 }
 
-// This function takes the input value in the find area text input
-      // locates it, and then zooms into that area. This is so that the user can
-      // show all listings, then decide to focus on one area of the map.
+/**
+* @description Search around the location which is the input value in the "Near" text input for business places.
+* @param {object} request - The address or coordinate of the location.
+* @param {string} term - Yelp search term (e.g. "food", "restaurants").
+*/
       function searchPlaces(request,term) {
-       // console.log(request);
        vm.locationError(0);
+       // If the user inputs nothing then returns.
         if(typeof(request.address)!='undefined'&&request.address==''){
           vm.searchEmpty(true);
           return;
         }
         vm.searchEmpty(false);
         var geocoder = new google.maps.Geocoder();
-           // Geocode the address/area entered to get the center. Then, center the map
-          // on it and zoom in
+           // Geocode the address/area entered to get the center. Then center the map on it.
           geocoder.geocode(
             request, function(results, status) {
               if (status == google.maps.GeocoderStatus.OK) {
                 vm.searchFailed(false);
+                // Remove the previous center marker from the map.
                 if(cm.marker()){
                     cm.marker().setMap(null);
                 }
@@ -85,8 +88,8 @@ searchPlaces({location:initial});
             });
       }
 
-        /**
- * Generates a random number and returns it as a string for OAuthentication
+/**
+ * @description Generates a random number and returns it as a string for OAuthentication
  * @return {string}
  */
 function nonce_generate() {
@@ -99,10 +102,14 @@ var yelp_url = 'http://api.yelp.com/v2/search',
     yelp_token='KhvBiuMmDYHKB9L9B5wzoNr9XywM7Dxh',
     yelp_token_secret='wDzMn0gVn8xKBu4l26soAIg1f9E';
 
-
-
-function newPlaceSearch (location,term) {
-   pm.hide();
+/**
+* @description Retrieve business places information using yelp api.
+* @param {string} location - The formatted address of the location retrieved from google api.
+* @param {string} term - Yelp search term (e.g. "food", "restaurants").
+*/
+function newPlaceSearch(location,term) {
+  // Hide and remove all the previous place markers.
+   vm.hide();
    pm.markers.removeAll();
       var parameters = {
       oauth_consumer_key: yelp_key,
@@ -113,18 +120,16 @@ function newPlaceSearch (location,term) {
       oauth_version : '1.0',
       callback: 'cb',              // This is crucial to include for jsonp implementation in AJAX or else the oauth-signature will be wrong.
       location:location,
-      //limit:10,
       sort:1,
       radius_filter:10000
-      // cll:initial.lat+','+initial.lng,
     };
-
-    if(typeof(term)!="undefined"){
+    if(term){
       parameters.term=term;
     }
     var encodedSignature = oauthSignature.generate('GET',yelp_url, parameters, yelp_key_secret, yelp_token_secret);
     parameters.oauth_signature = encodedSignature;
 
+    // If we cannot get response in 8 seconds,then shows the error message.
     var yelpRequestTimeout=setTimeout(function () {
        vm.yelpError(true);
     },8000);
@@ -134,17 +139,15 @@ function newPlaceSearch (location,term) {
       cache: true,                // This is crucial to include as well to prevent jQuery from adding on a cache-buster parameter "_=23489489749837", invalidating our oauth-signature
       dataType: 'jsonp',
       success: function(results) {
-        // Do stuff with results
+        // Request succeeds.
         vm.yelpError(false);
         clearTimeout(yelpRequestTimeout);
         nearbySearch(results);
 
       },
       fail: function(xhr, status, error) {
-      // Do stuff on fail
-      //console.log("An AJAX error occured: " + status + "\nError: " + error + "\nError detail: " + xhr.responseText);
-      //console.log(vm.yelpError());
-
+      // Request fails.
+      vm.yelpError(true);
     }
     };
 
@@ -152,10 +155,15 @@ function newPlaceSearch (location,term) {
     $.ajax(settings);
 }
 
+/**
+* @description Create markers for the business places retrieved.
+* @param {object} results - places information retrieved from yelp api.
+*/
       function nearbySearch(results) {
         var all=results.businesses;
         all.forEach( function(place) {
-        if(typeof(place.location.coordinate)== "undefined"){
+          // Ignore places' whose coordinates are unknown.
+        if(typeof(place.location.coordinate)=="undefined"){
           return;
         }
           pm.create(place);
@@ -163,42 +171,47 @@ function newPlaceSearch (location,term) {
         vm.showListings();
     }
 
-
-
-
-
-
-
-
-
-
+/**
+* @description Show error message if the google map request fails.
+*/
 function googleError(){
   vm.mapError(true);
 }
 
-      ko.bindingHandlers.slideVisible = {
+// Custom biding used for sliding up and down the menu using Jquery slideDown and slideUp.
+ko.bindingHandlers.slideVisible = {
     init: function(element, valueAccessor) {
         var value = ko.utils.unwrapObservable(valueAccessor());
-        // Get the current value of the current property we're bound to
+        // Get the current value of the current property we're bound to.
         $(element).toggle(value);
-        // jQuery will hide/show the element depending on whether "value" or true or false
+        // jQuery will hide/show the element depending on whether "value" or true or false.
     },
 
     update: function(element, valueAccessor) {
-        // First get the latest data that we're bound to
+        // First get the latest data that we're bound to.
         var value = valueAccessor();
 
-        // Next, whether or not the supplied model property is observable, get its current value
+        // Next, whether or not the supplied model property is observable, get its current value.
         var valueUnwrapped = ko.utils.unwrapObservable(value);
 
-        // Now manipulate the DOM element
+        // Now manipulate the DOM element.
         valueUnwrapped == true?$(element).slideDown('slow'):$(element).slideUp('fast');
     }
 };
+
+/**
+* @description Stores observables of business places near the center location.
+* @constructor
+*/
 var PlaceMarkers=function () {
   var self=this;
   self.markers=ko.observableArray([]);
   self.selected=ko.observable();
+
+/**
+* @description Create marker for the business place.
+* @param {object} place - place information retrieved from yelp api.
+*/
   self.create=function(place) {
         var coordinate=place.location.coordinate;
         latlng.lat=coordinate.latitude;
@@ -210,18 +223,19 @@ var PlaceMarkers=function () {
           animation: google.maps.Animation.DROP
         });
         marker.place=place;
+        //The navigate buttons are initial hidden.
         marker.navigateEnabled=ko.observable(false);
          // Push the marker to our array of markers.
           self.markers.push(marker);
        // Create an onclick event to open the large infowindow at each marker.
           marker.addListener('click', function() {
             self.populateInfoWindow(this, largeInfowindow);
+            // The navigate button shows when its corresponding marker is clicked on the map.
             self.markers().forEach( function(e) {
               (e.id===marker.id)?e.navigateEnabled(true):e.navigateEnabled(false);
             });
           });
-          // Two event listeners - one for mouseover, one for mouseout,
-          // to make the marker bounce or not.
+          // Two event listeners - one for mouseover, one for mouseout, to make the marker bounce or not.
           marker.addListener('mouseover', function() {
             this.setAnimation(google.maps.Animation.BOUNCE);
           });
@@ -231,19 +245,13 @@ var PlaceMarkers=function () {
 
       };
 
-         // This function will loop through the place markers and hide them all.
-       self.hide=function() {
-        // for (var i = 0,len=self.markers().length; i < len; i++) {
-        //   self.markers()[i].setMap(null);
-        // }
-        self.markers().forEach( function(marker) {
-          marker.setMap(null);
-        });
-      };
 
-      // This function populates the infowindow when the marker is clicked. We'll only allow
-      // one infowindow which will open at the marker that is clicked, and populate based
-      // on that markers position.
+
+/**
+* @description Populates the infowindow contains yelp information based on marker's position when the marker is clicked.
+* @param {object} marker - Place marker shows on the map.
+* @param {object} infowindow - The infomation window populates when the marker is clicked.
+*/
        self.populateInfoWindow=function(marker, infowindow) {
         // Check to make sure the infowindow is not already opened on this marker.
         if (infowindow.marker != marker) {
@@ -254,6 +262,7 @@ var PlaceMarkers=function () {
           infowindow.addListener('closeclick', function() {
             infowindow.marker = null;
           });
+          // The infowindow contains place name,image,address,rating,review count and categories.
           var place=marker.place,
           content='<div class="info"><section class="info-left">';
           if(place.image_url){
@@ -275,6 +284,7 @@ var PlaceMarkers=function () {
           if(place.review_count){
             content+='<div class="info-review">Based on '+place.review_count+' reviews</div>';
           }
+          // Display no more than two categories.
            if(place.categories){
             var categories_arr=[];
             place.categories.forEach( function(e) {
@@ -292,10 +302,18 @@ var PlaceMarkers=function () {
         }
       };
 };
+
+/**
+* @description Stores observable of marker of the center location.
+* @constructor
+*/
 var CenterMarker=function () {
   var self=this;
   self.marker=ko.observable();
-
+  /**
+* @description Create marker for the center location.
+* @param {object} place - place information retrieved from google api.
+*/
   self.create=function(place) {
         var marker = new google.maps.Marker({
           map: map,
@@ -318,16 +336,28 @@ var CenterMarker=function () {
       };
 };
 
+/**
+* @description Stores all the main functions and observables, and calles functions.
+* @constructor
+*/
  var ViewModel=function () {
       var self=this;
       self.btn=ko.observable(false);
-     // self.list=ko.observableArray([]);
-     // self.centerMarker=ko.observable();
+/**
+* @description Display menu upon click of hamburger Icon.
+*/
+      self.toggleBtn=function () {
+        self.btn(!self.btn());
+      };
+      //Display the short name of the location in the title.
       self.title=ko.observable('your favourite!');
+      //The input value of "Near" text input.
       self.center=ko.observable('');
+      //The input value of "Find" text input.
       self.querystr=ko.observable('');
-      //self.selectedMarker=ko.observable();
+      // Display the directions panel.
       self.showDirections=ko.observable(false);
+      // Show the error message caused by various reasons.
       self.mapError=ko.observable(false);
       self.yelpError=ko.observable(false);
       self.directionsError=ko.observable(false);
@@ -343,9 +373,8 @@ var CenterMarker=function () {
         self.mode.push(mode);
       });
       self.mode()[0].selected(true);
-      self.toggleBtn=function () {
-        self.btn(!self.btn());
-      };
+
+      // Stores all the markers on the list after filtered.
       self.list=ko.computed(function () {
         if($.trim(self.querystr()).length==0){
           return pm.markers();
@@ -355,7 +384,9 @@ var CenterMarker=function () {
         });
         }
       });
-            // This function will loop through the markers array and display them all.
+/**
+* @description Loop through the markers on the list and display them all.
+*/
        self.showListings=function() {
         var bounds = new google.maps.LatLngBounds(),
         // Extend the boundaries of the map for each marker and display the marker
@@ -371,14 +402,19 @@ var CenterMarker=function () {
         map.fitBounds(bounds);
       };
 
-      self.filter=function () {
-        pm.hide();
-        self.showListings();
+/**
+* @description Loop through the markers on the list and hide them all.
+*/
+       self.hide=function() {
+        self.list().forEach( function(marker) {
+          marker.setMap(null);
+        });
       };
-      // Bias the autocomplete object to the user's geographical location,
-      // as supplied by the browser's 'navigator.geolocation' object.
-      self.myPosition=function () {
 
+/**
+* @description Search by the user's geographical location.
+*/
+      self.myPosition=function () {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(function(position) {
             initial.lat=position.coords.latitude;
@@ -393,9 +429,15 @@ var CenterMarker=function () {
           self.locationError(2);
         }
       };
+
+/**
+* @description Using specific term to search.
+* @param {string} term - Yelp search term (e.g. "food", "restaurants").
+*/
       self.termSerach=function (term) {
         searchPlaces({address:self.center()},term);
       };
+
 
       self.listMouseOver=function (marker) {
         marker.setAnimation(google.maps.Animation.BOUNCE);
@@ -419,7 +461,7 @@ var CenterMarker=function () {
       }
 
       self.displayDirections=function (mode) {
-         pm.hide();
+         self.hide();
          cm.marker().setMap(null);
          self.mode().forEach( function(e) {
                e.selected(false);
