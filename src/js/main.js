@@ -311,21 +311,21 @@ var PlaceMarkers = function() {
             var place = marker.place,
                 content = '<div class="info"><section class="info-left">';
             if (place.image_url) {
-                content += '<img src="' + place.image_url + '">';
+                content += '<img src="' + place.image_url + '" alt="Business photo">';
             }
             content += '</section><section class="info-right">';
             if (place.name) {
                 content += '<div class="info-name">';
-                content += (place.url) ? '<a class="info-link" href="' + place.url + '">' + place.name + '</a></div>' : place.name + '</div>';
+                content += (place.url) ? '<a class="info-link" href="' + place.url + '" target="_blank">' + place.name + '</a></div>' : place.name + '</div>';
             }
             if (place.location.address) {
                 content += '<div class="info-addr">' + place.location.address + '</div>';
             }
             content += '<div class="info-rating">';
-            if (place.rating_img_url) {
-                content += '<img class="info-rating-left" src="' + place.rating_img_url + '">';
+            if (place.rating && place.rating_img_url) {
+                content += '<img class="info-rating-left" src="' + place.rating_img_url + '" alt="' + place.rating + '">';
             }
-            content += '<a href="https://www.yelp.com"><img class="info-yelp" src="img/yelp.png"></a></div>';
+            content += '<a href="https://www.yelp.com" target="_blank"><img class="info-yelp" src="img/yelp.png" alt="Yelp logo"></a></div>';
             if (place.review_count) {
                 content += '<div class="info-review">Based on ' + place.review_count + ' reviews</div>';
             }
