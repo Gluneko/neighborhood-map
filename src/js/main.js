@@ -37,7 +37,7 @@ function initMap() {
         mapTypeControl: false
     });
 
-    // This autocomplete is for use in the geocoder entry box.
+    // This autocomplete is for use in the "Near" input box.
     placesSearch = new google.maps.places.Autocomplete(
         (document.getElementById('places-search')));
 

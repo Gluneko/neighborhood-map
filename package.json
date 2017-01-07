@@ -1,0 +1,21 @@
+{
+  "name": "gluneko-project",
+  "version": "0.1.0",
+  "devDependencies": {
+    "connect-livereload": "latest",
+    "grunt": "^1.0.1",
+    "grunt-contrib-clean": "^1.0.0",
+    "grunt-contrib-concat": "latest",
+    "grunt-contrib-connect": "latest",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-cssmin": "^1.0.2",
+    "grunt-contrib-htmlmin": "^2.0.0",
+    "grunt-contrib-imagemin": "^1.0.1",
+    "grunt-contrib-uglify": "^2.0.0",
+    "grunt-contrib-watch": "latest",
+    "grunt-usemin": "latest",
+    "matchdep": "latest",
+    "ngmshell": "latest",
+    "shelljs": "latest"
+  }
+}
