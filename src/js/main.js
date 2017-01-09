@@ -1,8 +1,10 @@
 var map;
 var placesSearch;
+var place;
 var directionsDisplay;
 var largeInfowindow;
 var modes = ['Driving', 'Walking', 'Bicycling', 'Transit'];
+var bounds;
 
 // The coordinate of Silcon Valley.
 var initial = {
@@ -35,6 +37,13 @@ function initMap() {
         center: initial,
         zoom: 15,
         mapTypeControl: false
+    });
+
+    bounds = new google.maps.LatLngBounds();
+
+    // Make sure map markers always fit on screen as user resizes their browser window.
+    google.maps.event.addDomListener(window, 'resize', function() {
+        map.fitBounds(bounds);
     });
 
     // This autocomplete is for use in the "Near" input box.
@@ -72,11 +81,11 @@ function searchPlaces(request, term) {
     vm.locationError(0);
     vm.searchEmpty(false);
     vm.searchFailed(false);
-    var place;
 
     // If search by address.
     if (typeof(request) == 'undefined') {
-        place = placesSearch.getPlace();
+        //In case that place is undefined when searching with term using initial location.
+        place = placesSearch.getPlace() || place;
 
         // If search is empty or return no result show error message.
         place.name === "" ? vm.searchEmpty(true) : (place.geometry ? searchSucceed() : vm.searchFailed(true));
@@ -125,11 +134,11 @@ function nonce_generate() {
     return (Math.floor(Math.random() * 1e12).toString());
 }
 
-var yelp_url = 'http://api.yelp.com/v2/search',
-    yelp_key = 'GBzdouuzuehAS1eKl5WGHg',
-    yelp_key_secret = 'jAl4d0vuCI7XJY3DMFVsYxET4PQ',
-    yelp_token = 'KhvBiuMmDYHKB9L9B5wzoNr9XywM7Dxh',
-    yelp_token_secret = 'wDzMn0gVn8xKBu4l26soAIg1f9E';
+var YELP_URL = 'http://api.yelp.com/v2/search',
+    YELP_KEY = 'GBzdouuzuehAS1eKl5WGHg',
+    YELP_KEY_SECRET = 'jAl4d0vuCI7XJY3DMFVsYxET4PQ',
+    YELP_TOKEN = 'KhvBiuMmDYHKB9L9B5wzoNr9XywM7Dxh',
+    YELP_TOKEN_SECRET = 'wDzMn0gVn8xKBu4l26soAIg1f9E';
 
 /**
  * @description Retrieve business places information using yelp api.
@@ -141,8 +150,8 @@ function newPlaceSearch(location, term) {
     pm.hide();
     pm.markers.removeAll();
     var parameters = {
-        oauth_consumer_key: yelp_key,
-        oauth_token: yelp_token,
+        oauth_consumer_key: YELP_KEY,
+        oauth_token: YELP_TOKEN,
         oauth_nonce: nonce_generate(),
         oauth_timestamp: Math.floor(Date.now() / 1000),
         oauth_signature_method: 'HMAC-SHA1',
@@ -155,22 +164,16 @@ function newPlaceSearch(location, term) {
     if (term) {
         parameters.term = term;
     }
-    var encodedSignature = oauthSignature.generate('GET', yelp_url, parameters, yelp_key_secret, yelp_token_secret);
+    var encodedSignature = oauthSignature.generate('GET', YELP_URL, parameters, YELP_KEY_SECRET, YELP_TOKEN_SECRET);
     parameters.oauth_signature = encodedSignature;
-
-    // If we cannot get yelp response in 8 seconds,then shows the error message.
-    var yelpRequestTimeout = setTimeout(function() {
-        vm.yelpError(true);
-    }, 8000);
     var settings = {
-        url: yelp_url,
+        url: YELP_URL,
         data: parameters,
         cache: true, // This is crucial to include as well to prevent jQuery from adding on a cache-buster parameter "_=23489489749837", invalidating our oauth-signature
         dataType: 'jsonp',
         success: function(results) {
             // Request succeeds.
             vm.yelpError(false);
-            clearTimeout(yelpRequestTimeout);
             nearbySearch(results);
 
         },
@@ -191,7 +194,6 @@ function newPlaceSearch(location, term) {
 function nearbySearch(results) {
     var all = results.businesses;
     all.forEach(function(place) {
-
         // Ignore places' whose coordinates are unknown.
         if (typeof(place.location.coordinate) == "undefined") {
             return;
@@ -239,6 +241,28 @@ var PlaceMarkers = function() {
     self.selected = ko.observable();
 
     /**
+     * @description Marker bounces for 1500ms.
+     * @param {object} marker - Place marker the user selects or mouseover.
+     */
+    self.bounce = function(marker) {
+        marker.setAnimation(google.maps.Animation.BOUNCE);
+        setTimeout(function() {
+            marker.setAnimation(null);
+        }, 1500);
+    };
+
+    /**
+     * @description When the user selects the marker on the map or list,make the marker bounce,
+     * open the infowindow and center the map on the marker.
+     * @param {object} marker - The marker selected by the user on the map or list.
+     */
+    this.toggleDetails = function(marker) {
+        self.bounce(marker);
+        map.panTo(marker.getPosition());
+        self.populateInfoWindow(marker, largeInfowindow);
+    };
+
+    /**
      * @description Create marker for the business place.
      * @param {object} place - place information retrieved from yelp api.
      */
@@ -260,9 +284,9 @@ var PlaceMarkers = function() {
         // Push the marker to our array of markers.
         self.markers.push(marker);
 
-        // Create an onclick event to open the large infowindow at each marker.
+        // Create an onclick event to show the details of each marker.
         marker.addListener('click', function() {
-            self.populateInfoWindow(this, largeInfowindow);
+            self.toggleDetails(this);
 
             // The navigate button shows when its corresponding marker is clicked on the map.
             self.markers().forEach(function(e) {
@@ -272,7 +296,7 @@ var PlaceMarkers = function() {
 
         // Two event listeners - one for mouseover, one for mouseout, to make the marker bounce or not.
         marker.addListener('mouseover', function() {
-            this.setAnimation(google.maps.Animation.BOUNCE);
+            self.bounce(this);
         });
         marker.addListener('mouseout', function() {
             this.setAnimation(null);
@@ -309,37 +333,32 @@ var PlaceMarkers = function() {
 
             // The infowindow contains place name,image,address,rating,review count and categories.
             var place = marker.place,
-                content = '<div class="info"><section class="info-left">';
-            if (place.image_url) {
-                content += '<img src="' + place.image_url + '" alt="Business photo">';
-            }
-            content += '</section><section class="info-right">';
-            if (place.name) {
-                content += '<div class="info-name">';
-                content += (place.url) ? '<a class="info-link" href="' + place.url + '" target="_blank">' + place.name + '</a></div>' : place.name + '</div>';
-            }
-            if (place.location.address) {
-                content += '<div class="info-addr">' + place.location.address + '</div>';
-            }
-            content += '<div class="info-rating">';
-            if (place.rating && place.rating_img_url) {
-                content += '<img class="info-rating-left" src="' + place.rating_img_url + '" alt="' + place.rating + '">';
-            }
-            content += '<a href="https://www.yelp.com" target="_blank"><img class="info-yelp" src="img/yelp.png" alt="Yelp logo"></a></div>';
-            if (place.review_count) {
-                content += '<div class="info-review">Based on ' + place.review_count + ' reviews</div>';
-            }
-
+                content,
+                image = (!!place.image_url) ? '<img src="' + place.image_url + '" alt="Business photo">' : 'No image provided',
+                name = (!!place.name) ? place.name : 'No name provided',
+                nameUrl = (!!place.url) ? '<a class="info-link" href="' + place.url + '" target="_blank">' + name + '</a>' : name,
+                address = (!!place.location.address) ? place.location.address : 'Address not found',
+                ratingTxt = (!!place.rating) ? place.rating : 'No rating available',
+                rating = (!!place.rating_img_url) ? '<img class="info-rating-left" src="' + place.rating_img_url + '" alt="' + ratingTxt + '">' : ratingTxt,
+                reviewCount = (!!place.review_count) ? 'Based on ' + place.review_count + ' reviews' : 'No review count provided',
+                categories;
             // Display no more than two categories.
             if (place.categories) {
                 var categories_arr = [];
                 place.categories.forEach(function(e) {
                     categories_arr.push(e[0]);
                 });
-                var categories = categories_arr.slice(0, 2).join(',');
-                content += '<div class="info-cate">' + categories + '<div>';
+                categories = categories_arr.slice(0, 2).join(',');
             }
-            content += '</section></div>';
+            content = '<div class="info"><section class="info-left">' + image +
+                '</section><section class="info-right"><div class="info-name">' +
+                nameUrl + '</div>' +
+                '<div class="info-addr">' + address + '</div>' +
+                '<div class="info-rating">' + rating +
+                '<a href="https://www.yelp.com" target="_blank"><img class="info-yelp" src="img/yelp.png" alt="Yelp logo"></a></div>' +
+                '<div class="info-review">' + reviewCount + '</div>' +
+                '<div class="info-cate">' + categories + '</div></section></div>';
+
             infowindow.setContent(content);
 
             // Open the infowindow on the correct marker.
@@ -357,6 +376,15 @@ var CenterMarker = function() {
     self.marker = ko.observable();
 
     /**
+     * @description Marker bounces for 1500ms.
+     */
+    self.bounce = function() {
+        self.marker().setAnimation(google.maps.Animation.BOUNCE);
+        setTimeout(function() {
+            self.marker().setAnimation(null);
+        }, 1500);
+    };
+    /**
      * @description Create marker for the center location.
      * @param {object} place - place information retrieved from google api.
      */
@@ -371,10 +399,14 @@ var CenterMarker = function() {
         });
         self.marker(marker);
 
-        // Two event listeners - one for mouseover, one for mouseout,
+        // Three event listeners - one for click, one for mouseover, one for mouseout,
         // to make the marker bounce or not.
+        marker.addListener('click', function() {
+            self.bounce(this);
+            map.panTo(this.getPosition());
+        });
         marker.addListener('mouseover', function() {
-            this.setAnimation(google.maps.Animation.BOUNCE);
+            self.bounce(this);
         });
         marker.addListener('mouseout', function() {
             this.setAnimation(null);
@@ -431,7 +463,7 @@ var ViewModel = function() {
         self.mode.push(mode);
     });
 
-    // Default option is driving mode
+    // Default option is driving mode.
     self.mode()[0].selected(true);
 
     // Stores all the markers on the list after filtered.
@@ -449,15 +481,15 @@ var ViewModel = function() {
      * @description Loop through the markers on the list and display them all.
      */
     self.showListings = function() {
-        var bounds = new google.maps.LatLngBounds(),
-            // Extend the boundaries of the map for each marker and display the marker
-            markers = self.list(),
+        bounds = new google.maps.LatLngBounds();
+        var markers = self.list(),
             len = markers.length;
         if (len === 0) {
             return;
         }
         for (var i = 0; i < len; i++) {
             markers[i].setMap(map);
+            // Extend the boundaries of the map for each marker and display the marker
             bounds.extend(markers[i].position);
         }
         map.fitBounds(bounds);
@@ -487,7 +519,7 @@ var ViewModel = function() {
                 self.locationError(1);
             });
         } else {
-            // Browser doesn't support Geolocation
+            // Browser doesn't support Geolocation.
             self.locationError(2);
         }
     };
@@ -505,7 +537,7 @@ var ViewModel = function() {
      * @param {object} marker - The marker mouseover on the map or list.
      */
     self.listMouseOver = function(marker) {
-        marker.setAnimation(google.maps.Animation.BOUNCE);
+        pm.bounce(marker);
     };
 
     /**
@@ -517,13 +549,11 @@ var ViewModel = function() {
     };
 
     /**
-     * @description When the user click the marker,make the marker bounce,
-     * open the infowindow and enable the navigate button.
+     * @description When the user selects the marker,show the details and enable the navigate button.
      * @param {object} marker - The marker selected by the user on the map or list.
      */
     self.listClick = function(marker) {
-        marker.setAnimation(google.maps.Animation.BOUNCE);
-        pm.populateInfoWindow(marker, largeInfowindow);
+        pm.toggleDetails(marker);
         self.list().forEach(function(e) {
             e.navigateEnabled(false);
         });
